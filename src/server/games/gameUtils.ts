@@ -2,17 +2,6 @@ import { GameMap, Vector2 } from '../definitions/type';
 
 export const NS_PER_SEC = 1e9;
 
-export const Vector3Zero = {
-  x: 0,
-  y: 0,
-  z: 0,
-} as const;
-
-export const Vector2Zero = {
-  x: 0,
-  y: 0,
-} as const;
-
 export const getCurrentTickInNanos = () => {
   const tick = process.hrtime();
   return tick[0] * NS_PER_SEC + tick[1];

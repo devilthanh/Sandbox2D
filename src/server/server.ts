@@ -7,15 +7,6 @@ import { GameMessage, GameOptions, JoinMessage, PlayerOptions } from './definiti
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
 
-export interface GameServer {
-  wsServer: WebSocketServer;
-  gameRooms: GameRoom[];
-  addGameRoom: (gameOptions: GameOptions) => void;
-  removeGameRoom: (id: number | string) => void;
-  addPlayer: (gameId: number | string, playerOptions: PlayerOptions) => void;
-  removePlayer: (gameId: number | string, playerId: number | string) => void;
-}
-
 const createServer = (): express.Application => {
   const app = express();
   const server = new Server(app);
@@ -26,12 +17,20 @@ const createServer = (): express.Application => {
     console.log(`Server listening on ${SERVER_PORT}`);
   });
 
-  app.get('/', (_req, res) => {
-    res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
-    res.sendFile(path.join(__dirname, '..', 'app', 'index.html'));
+  app.get('/game', (req, res, next) => {
+    const gameRoom = gameRooms.find(gameRoom => gameRoom.id === req.query.roomId);
+    if (gameRoom) {
+      res.sendFile(path.join(__dirname, '..', 'app', 'index.html'));
+    } else {
+      next();
+    }
   });
 
   app.use('/client', express.static(path.join(__dirname, '..', 'app')));
+
+  app.get('*', (_req, res) => {
+    res.status(404).sendFile(path.join(__dirname, '..', 'app', '404.html'));
+  });
 
   wsServer.on('request', request => {
     const connection = request.accept(null, request.origin);
@@ -48,16 +47,15 @@ const createServer = (): express.Application => {
       const message: GameMessage = JSON.parse((data as IUtf8Message).utf8Data);
       if (message.event === 'JOIN') {
         const joinMessage: JoinMessage = message.data as JoinMessage;
-        const gameRoom = gameRooms.find(gameRoom => gameRoom.id === joinMessage.gameId);
+        const gameRoom = gameRooms.find(gameRoom => gameRoom.id === message.roomId);
         if (gameRoom) {
-          const gameId = gameRoom.id;
           gameRoom.addPlayer({
             playerName: joinMessage.playerName,
             connection: connection,
           });
           connection.send(
             JSON.stringify({
-              gameId: gameId,
+              roomId: message.roomId,
               event: 'LOAD_MAP',
               data: gameRoom.map,
             } as GameMessage)
@@ -71,7 +69,7 @@ const createServer = (): express.Application => {
     gameRooms.push(new GameRoom(gameOptions));
   };
 
-  const removeGameRoom = (id: number | string) => {
+  const removeGameRoom = (id: string) => {
     const gameRoom = gameRooms.find(gameRoom => gameRoom.id === id);
     if (gameRoom) {
       const index = gameRooms.indexOf(gameRoom);
@@ -85,6 +83,7 @@ const createServer = (): express.Application => {
     maxPlayers: 32,
     map: dust2,
     bots: 5,
+    autoStart: true,
   });
   return app;
 };

@@ -4,6 +4,8 @@ import { connection } from 'websocket';
 export type MapTile = {
   id: number;
   type: number;
+  sd: number;
+  sdId: number;
 };
 
 export type GameMap = {
@@ -17,7 +19,7 @@ export type GameMap = {
 
 // Games
 export type GameOptions = {
-  id?: string | number;
+  id?: string;
   roomName: string;
   maxPlayers: number;
   map: GameMap;
@@ -26,7 +28,7 @@ export type GameOptions = {
 };
 
 export type GameInfo = {
-  id: number | string;
+  id: string;
   roomName: string;
   players: number;
   maxPlayers: number;
@@ -46,8 +48,15 @@ export type InputController = {
 };
 
 export type PlayerUpdate = {
-  id: number | string;
+  id: string;
+  name: string;
+  health: number;
+  maxHealth: number;
+  sheild: number;
+  maxSheild: number;
   rotate: number;
+  fakeRotate: number;
+  onAttack: boolean;
   position: Vector2;
   velocity: Vector2;
   inputController: InputController;
@@ -74,12 +83,17 @@ export enum ChatChannel {
 
 export type ChatMessage = {
   channel: keyof typeof ChatChannel;
+  playerName: string;
   message: string;
 };
 
 export type JoinMessage = {
-  gameId: number | string;
   playerName: string;
+  playerId: string;
+};
+
+export type PingMessage = {
+  latency: number;
 };
 
 export enum GameMessageType {
@@ -93,8 +107,8 @@ export enum GameMessageType {
 }
 
 export type GameMessage = {
-  gameId: number | string;
+  roomId: string;
   event: keyof typeof GameMessageType;
-  playerId?: number | string;
-  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage;
+  playerId?: string;
+  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage | PingMessage | InputController;
 };

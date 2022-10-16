@@ -8,12 +8,12 @@ import {
   PlayerUpdate,
 } from '../definitions/type';
 import Player from './player';
-import { getCurrentTickInNanos, NS_PER_SEC, toTile, walkable, Vector2Zero, normalizeVector2 } from './gameUtils';
+import { getCurrentTickInNanos, NS_PER_SEC, toTile, walkable, normalizeVector2 } from './gameUtils';
 
 const serverTick = 30;
 
 class GameRoom {
-  private _id: number | string;
+  private _id: string;
   private _roomName: string;
   private _maxPlayer: number;
   private _map: GameMap;
@@ -25,7 +25,7 @@ class GameRoom {
   private _mapH: number;
 
   constructor(gameOptions: GameOptions) {
-    this._id = gameOptions.id || getCurrentTickInNanos();
+    this._id = gameOptions.id || getCurrentTickInNanos().toString();
     this._roomName = gameOptions.roomName;
     this._maxPlayer = gameOptions.maxPlayers;
     this._map = gameOptions.map;
@@ -39,7 +39,7 @@ class GameRoom {
     gameOptions.autoStart && this.start();
   }
 
-  public get id(): number | string {
+  public get id(): string {
     return this._id;
   }
 
@@ -78,11 +78,18 @@ class GameRoom {
   public addPlayer = (playerOptions: PlayerOptions): Player => {
     const player = new Player(this, playerOptions);
     this._players.push(player);
+    player.sendMessage({
+      roomId: this._id,
+      event: 'JOIN',
+      data: {
+        playerId: player.id,
+      },
+    } as GameMessage);
     console.log(`Player [${player.id}]${player.name} joined GameRoom [${this._id}]${this._roomName}`);
     return player;
   };
 
-  public removePlayerById = (id: number | string) => {
+  public removePlayerById = (id: string) => {
     const player = this._players.find(player => player.id === id);
     if (player) {
       const index = this._players.indexOf(player);
@@ -91,7 +98,7 @@ class GameRoom {
     }
   };
 
-  public removePlayerByIp = (ip: number | string) => {
+  public removePlayerByIp = (ip: string) => {
     const player = this._players.find(player => player.ip === ip);
     if (player) {
       const index = this._players.indexOf(player);
@@ -114,7 +121,7 @@ class GameRoom {
 
   private gameUpdate = () => {
     for (const player of this._players) {
-      player.velocity = Vector2Zero;
+      player.velocity = { x: 0, y: 0 };
 
       if (player.knockTime > 0) player.knockTime -= 1;
 
@@ -155,14 +162,14 @@ class GameRoom {
         player.velocity.y = 0;
       }
 
-      if (player.velocity.x != 0 || player.velocity.y != 0) {
-        if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
-          player.velocity.x = 0;
-        }
-        if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
-          player.velocity.y = 0;
-        }
-      }
+      // if (player.velocity.x != 0 || player.velocity.y != 0) {
+      //   if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
+      //     player.velocity.x = 0;
+      //   }
+      //   if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
+      //     player.velocity.y = 0;
+      //   }
+      // }
 
       player.position.x += player.velocity.x;
       player.position.y += player.velocity.y;
@@ -192,7 +199,7 @@ class GameRoom {
                   const killed = otherPlayer.hit(player, dir);
                   if (killed) {
                     this.broadcast({
-                      gameId: this._id,
+                      roomId: this._id,
                       event: 'CHAT',
                       data: {
                         channel: 'GAME_ROOM',
@@ -240,7 +247,14 @@ class GameRoom {
     for (const player of this._players) {
       sendData.push({
         id: player.id,
-        rotate: 0,
+        name: player.name,
+        health: player.health,
+        maxHealth: player.maxHealth,
+        sheild: player.sheild,
+        maxSheild: player.maxSheild,
+        rotate: player.rotate,
+        fakeRotate: player.fakeRotate,
+        onAttack: player.onAttack,
         position: player.position,
         velocity: player.velocity,
         inputController: player.inputController,
@@ -248,7 +262,7 @@ class GameRoom {
     }
 
     this.broadcast({
-      gameId: this._id,
+      roomId: this._id,
       event: 'PLAYER_UPDATE',
       data: sendData,
     });
@@ -256,7 +270,6 @@ class GameRoom {
 
   private loop = () => {
     const now = getCurrentTickInNanos();
-
     if (now - this._tick > NS_PER_SEC / serverTick) {
       this._tick = now;
       this._tickIndex++;

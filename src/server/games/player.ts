@@ -1,12 +1,12 @@
 import { connection, IUtf8Message } from 'websocket';
-import { PlayerOptions, InputController, Vector2, GameMessage } from '../definitions/type';
+import { PlayerOptions, InputController, Vector2, GameMessage, ChatMessage, PingMessage } from '../definitions/type';
 import GameRoom from './game';
-import { Vector3Zero, Vector2Zero, randomInt, getCurrentTickInNanos, NS_PER_SEC, walkable } from './gameUtils';
+import { randomInt, getCurrentTickInNanos, NS_PER_SEC, walkable } from './gameUtils';
 
 const botUpdateSeconds = 3;
 
 class Player {
-  private _id: number | string;
+  private _id: string;
   private _name: string;
   private _ip?: string;
   private _isBot: boolean;
@@ -14,6 +14,7 @@ class Player {
   private _gameRoom: GameRoom;
   private _connection?: connection;
   private _inputController: InputController;
+  private _latency: number;
   public position: Vector2;
   public rotate: number;
   public fakeRotate: number;
@@ -35,11 +36,12 @@ class Player {
     this._connection = playerOptions.connection;
     this._ip = playerOptions.connection?.remoteAddress.split(':')[3];
     this._name = playerOptions.playerName;
-    this._id = getCurrentTickInNanos();
+    this._id = getCurrentTickInNanos().toString();
     this._isBot = this._ip === undefined;
     this._tick = getCurrentTickInNanos();
-    this._inputController = {};
-    this.position = Vector2Zero;
+    this._inputController = { moveLeft: false, moveRight: false, moveUp: false, moveDown: false };
+    this._latency = 0;
+    this.position = { x: 0, y: 0 };
     this.rotate = 0;
     this.fakeRotate = 0;
     this.health = 100;
@@ -47,7 +49,7 @@ class Player {
     this.maxSheild = 100;
     this.sheild = 0;
     this.maxSheild = 0;
-    this.velocity = Vector3Zero;
+    this.velocity = { x: 0, y: 0 };
     this.isRunning = false;
     this.onAttack = false;
     this.attackStage = 0;
@@ -55,6 +57,7 @@ class Player {
     this.knockTime = 0;
     this.knockDir = 0;
     this.knock = {};
+    this.spawn();
     this._isBot && this.botLoop();
     this.initNetwork();
   }
@@ -79,17 +82,41 @@ class Player {
     this._connection?.send(JSON.stringify(gameMessage));
   };
 
+  public hit = (attackPlayer: Player, dir: number): boolean => {
+    this.knockTime = 20;
+    this.knockDir = dir;
+    this.health -= Math.floor(Math.random() * 30);
+    if (this.health <= 0) {
+      this.health = 100;
+      this.spawn();
+      return true;
+    }
+    return false;
+  };
+
   private initNetwork = () => {
     this._connection?.on('message', data => {
       const message: GameMessage = JSON.parse((data as IUtf8Message).utf8Data);
       switch (message.event) {
-        case 'CHAT':
+        case 'PING': {
+          const pingMessage: PingMessage = message.data as PingMessage;
+          this._latency = pingMessage.latency;
+          break;
+        }
+        case 'CHAT': {
+          const chatMessage: ChatMessage = message.data as ChatMessage;
+          chatMessage.playerName = this._name;
+          message.data = chatMessage;
           this._gameRoom.broadcast(message);
           break;
+        }
         case 'INPUT':
           this._inputController = message.data as InputController;
           break;
         case 'ATTACK':
+          this.onAttack = true;
+          this.attackStage = 3;
+          this.attackCount = 5;
           break;
       }
     });
@@ -165,7 +192,7 @@ class Player {
     }
   };
 
-  spawn() {
+  private spawn = () => {
     var xx, yy;
     do {
       xx = Math.floor(Math.random() * this._gameRoom.map.width);
@@ -173,19 +200,7 @@ class Player {
     } while (!walkable(this._gameRoom.map.data[yy][xx].type) || this._gameRoom.map.data[yy][xx].id === 0);
     this.position.x = xx * this._gameRoom.map.tileWidth + this._gameRoom.map.tileWidth / 2;
     this.position.y = yy * this._gameRoom.map.tileHeight + this._gameRoom.map.tileHeight / 2;
-  }
-
-  hit(attackPlayer: Player, dir: number): boolean {
-    this.knockTime = 20;
-    this.knockDir = dir;
-    this.health -= Math.floor(Math.random() * 30);
-    if (this.health <= 0) {
-      this.health = 100;
-      this.spawn();
-      return true;
-    }
-    return false;
-  }
+  };
 }
 
 export default Player;
