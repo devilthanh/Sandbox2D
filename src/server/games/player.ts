@@ -1,5 +1,6 @@
-import { PlayerOptions, InputController, Vector2 } from '../definitions/type';
-import { GameRoom } from './game';
+import { connection, IUtf8Message } from 'websocket';
+import { PlayerOptions, InputController, Vector2, GameMessage } from '../definitions/type';
+import GameRoom from './game';
 import { Vector3Zero, Vector2Zero, randomInt, getCurrentTickInNanos, NS_PER_SEC, walkable } from './gameUtils';
 
 const botUpdateSeconds = 3;
@@ -11,6 +12,8 @@ class Player {
   private _isBot: boolean;
   private _tick: number;
   private _gameRoom: GameRoom;
+  private _connection?: connection;
+  private _inputController: InputController;
   public position: Vector2;
   public rotate: number;
   public fakeRotate: number;
@@ -19,7 +22,6 @@ class Player {
   public sheild: number;
   public maxSheild: number;
   public velocity: Vector2;
-  public inputController: InputController;
   public isRunning: boolean;
   public onAttack: boolean;
   public attackStage: number;
@@ -30,11 +32,13 @@ class Player {
 
   constructor(gameRoom: GameRoom, playerOptions: PlayerOptions) {
     this._gameRoom = gameRoom;
+    this._connection = playerOptions.connection;
+    this._ip = playerOptions.connection?.remoteAddress.split(':')[3];
     this._name = playerOptions.playerName;
     this._id = getCurrentTickInNanos();
-    this._ip = playerOptions.ip;
     this._isBot = this._ip === undefined;
     this._tick = getCurrentTickInNanos();
+    this._inputController = {};
     this.position = Vector2Zero;
     this.rotate = 0;
     this.fakeRotate = 0;
@@ -44,7 +48,6 @@ class Player {
     this.sheild = 0;
     this.maxSheild = 0;
     this.velocity = Vector3Zero;
-    this.inputController = {};
     this.isRunning = false;
     this.onAttack = false;
     this.attackStage = 0;
@@ -53,15 +56,44 @@ class Player {
     this.knockDir = 0;
     this.knock = {};
     this._isBot && this.botLoop();
+    this.initNetwork();
   }
 
   public get id() {
     return this._id;
   }
 
+  public get ip() {
+    return this._ip;
+  }
+
   public get name() {
     return this._name;
   }
+
+  public get inputController() {
+    return this._inputController;
+  }
+
+  public sendMessage = (gameMessage: GameMessage) => {
+    this._connection?.send(JSON.stringify(gameMessage));
+  };
+
+  private initNetwork = () => {
+    this._connection?.on('message', data => {
+      const message: GameMessage = JSON.parse((data as IUtf8Message).utf8Data);
+      switch (message.event) {
+        case 'CHAT':
+          this._gameRoom.broadcast(message);
+          break;
+        case 'INPUT':
+          this._inputController = message.data as InputController;
+          break;
+        case 'ATTACK':
+          break;
+      }
+    });
+  };
 
   private botUpdate = () => {
     if (!this._isBot) return;
@@ -70,30 +102,30 @@ class Player {
 
     switch (moveX) {
       case -1:
-        this.inputController.moveLeft = true;
-        this.inputController.moveRight = false;
+        this._inputController.moveLeft = true;
+        this._inputController.moveRight = false;
         break;
       case 1:
-        this.inputController.moveLeft = false;
-        this.inputController.moveRight = true;
+        this._inputController.moveLeft = false;
+        this._inputController.moveRight = true;
         break;
       default:
-        this.inputController.moveLeft = false;
-        this.inputController.moveRight = false;
+        this._inputController.moveLeft = false;
+        this._inputController.moveRight = false;
     }
 
     switch (moveY) {
       case -1:
-        this.inputController.moveUp = true;
-        this.inputController.moveDown = false;
+        this._inputController.moveUp = true;
+        this._inputController.moveDown = false;
         break;
       case 1:
-        this.inputController.moveUp = false;
-        this.inputController.moveDown = true;
+        this._inputController.moveUp = false;
+        this._inputController.moveDown = true;
         break;
       default:
-        this.inputController.moveUp = false;
-        this.inputController.moveDown = false;
+        this._inputController.moveUp = false;
+        this._inputController.moveDown = false;
     }
 
     this.isRunning = randomInt(0, 3) === 0 ? true : false;
@@ -101,10 +133,10 @@ class Player {
 
     const rotateVector: Vector2 = { x: 0, y: 0 };
 
-    if (this.inputController.moveLeft) rotateVector.x = -1;
-    if (this.inputController.moveRight) rotateVector.x = 1;
-    if (this.inputController.moveUp) rotateVector.y = -1;
-    if (this.inputController.moveDown) rotateVector.y = 1;
+    if (this._inputController.moveLeft) rotateVector.x = -1;
+    if (this._inputController.moveRight) rotateVector.x = 1;
+    if (this._inputController.moveUp) rotateVector.y = -1;
+    if (this._inputController.moveDown) rotateVector.y = 1;
 
     this.rotate = -Math.atan2(0 - rotateVector.x, 0 - rotateVector.y);
 

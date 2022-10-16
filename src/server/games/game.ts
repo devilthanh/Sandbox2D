@@ -1,4 +1,3 @@
-import { server as WebSocketServer } from 'websocket';
 import {
   ChatMessage,
   GameInfo,
@@ -14,7 +13,6 @@ import { getCurrentTickInNanos, NS_PER_SEC, toTile, walkable, Vector2Zero, norma
 const serverTick = 30;
 
 class GameRoom {
-  private _wsServer: WebSocketServer;
   private _id: number | string;
   private _roomName: string;
   private _maxPlayer: number;
@@ -26,8 +24,7 @@ class GameRoom {
   private _mapW: number;
   private _mapH: number;
 
-  constructor(wsServer: WebSocketServer, gameOptions: GameOptions) {
-    this._wsServer = wsServer;
+  constructor(gameOptions: GameOptions) {
     this._id = gameOptions.id || getCurrentTickInNanos();
     this._roomName = gameOptions.roomName;
     this._maxPlayer = gameOptions.maxPlayers;
@@ -73,7 +70,7 @@ class GameRoom {
   public broadcast = (gameMessage: GameMessage) => {
     for (const player of this._players) {
       if (!gameMessage.playerId || gameMessage.playerId === player.id) {
-        console.log(gameMessage);
+        player.sendMessage(gameMessage);
       }
     }
   };
@@ -85,8 +82,17 @@ class GameRoom {
     return player;
   };
 
-  public removePlayer = (id: number | string) => {
+  public removePlayerById = (id: number | string) => {
     const player = this._players.find(player => player.id === id);
+    if (player) {
+      const index = this._players.indexOf(player);
+      this._players.splice(index, 1);
+      console.log(`Player [${player.id}]${player.name} left GameRoom [${this._id}]${this._roomName}`);
+    }
+  };
+
+  public removePlayerByIp = (ip: number | string) => {
+    const player = this._players.find(player => player.ip === ip);
     if (player) {
       const index = this._players.indexOf(player);
       this._players.splice(index, 1);
@@ -269,181 +275,4 @@ class GameRoom {
   };
 }
 
-const createGameRoom = (gameOptions: GameOptions) => {
-  // // NETWORKING-----------------------------------------------------------------
-  // const broadCast = (msg) {
-  //   for (i in PLAYERS) {
-  //     if (!PLAYERS[i].bot) PLAYERS[i].socket.send(msg);
-  //   }
-  // };
-  // wsServer.on('const request', (request) {
-  //   var connection = request.accept(null, request.origin);
-  //   var clientIp = connection.remoteAddress.split(':')[3];
-  //   delete PLAYERS[clientIp];
-  //   PLAYERS[clientIp] = new Player(clientIp, clientIp);
-  //   PLAYERS[clientIp].socket = connection;
-  //   console.log('Player at ' + PLAYERS[clientIp].name + ' connected.');
-  //   broadCast(
-  //     JSON.stringify({
-  //       header: 'chatUpdate',
-  //       data: { name: '[System]', msg: 'Player at ' + PLAYERS[clientIp].name + ' connected.' },
-  //     })
-  //   );
-  //   connection.send(
-  //     JSON.stringify({
-  //       header: 'load',
-  //       data: {
-  //         id: clientIp,
-  //         sv_tick: tick,
-  //         map: map,
-  //       },
-  //     })
-  //   );
-  //   var sendData = [];
-  //   for (var i in PLAYERS) {
-  //     sendData.push({
-  //       name: PLAYERS[i].name,
-  //       ip: PLAYERS[i].ip,
-  //       x: PLAYERS[i].x,
-  //       y: PLAYERS[i].y,
-  //       rot: PLAYERS[i].rot,
-  //       fakerot: PLAYERS[i].fakerot,
-  //       health: PLAYERS[i].health,
-  //       armor: PLAYERS[i].armor,
-  //       moveLeft: PLAYERS[i].moveLeft,
-  //       moveRight: PLAYERS[i].moveRight,
-  //       moveUp: PLAYERS[i].moveUp,
-  //       moveDown: PLAYERS[i].moveDown,
-  //       run: PLAYERS[i].run,
-  //       onAttack: PLAYERS[i].onAttack,
-  //       attackStage: PLAYERS[i].attackStage,
-  //       attackCount: PLAYERS[i].attackCount,
-  //       knockTime: PLAYERS[i].knockTime,
-  //       knockDir: PLAYERS[i].knockDir,
-  //       knock: PLAYERS[i].knock,
-  //       botrot: PLAYERS[i].botrot,
-  //       bot: PLAYERS[i].bot,
-  //     });
-  //   }
-  //   broadCast(
-  //     JSON.stringify({
-  //       header: 'newPlayer',
-  //       data: sendData,
-  //     })
-  //   );
-  //   connection.on('close', (data) {
-  //     if (PLAYERS[clientIp] != undefined) {
-  //       console.log('Player at ' + PLAYERS[clientIp].name + ' disconnected.');
-  //       broadCast(
-  //         JSON.stringify({
-  //           header: 'chatUpdate',
-  //           data: { name: '[System]', msg: 'Player at ' + PLAYERS[clientIp].name + ' disconnected.' },
-  //         })
-  //       );
-  //       delete PLAYERS[clientIp];
-  //       broadCast(JSON.stringify({ header: 'deletePlayer', data: clientIp }));
-  //     }
-  //   });
-  //   connection.on('message', (event) {
-  //     var msg = JSON.parse(event.utf8Data);
-  //     var header = msg.header;
-  //     var data = msg.data;
-  //     if (header === 'sendMouse') {
-  //       PLAYERS[clientIp].onAttack = true;
-  //       PLAYERS[clientIp].attackStage = 3;
-  //       PLAYERS[clientIp].attackCount = 5;
-  //       for (var j in PLAYERS[clientIp].knock) PLAYERS[clientIp].knock[j] = false;
-  //       broadCast(
-  //         JSON.stringify({
-  //           header: 'updateAttack',
-  //           data: {
-  //             ip: clientIp,
-  //             onAttack: PLAYERS[clientIp].onAttack,
-  //             attackStage: PLAYERS[clientIp].attackStage,
-  //             attackCount: PLAYERS[clientIp].attackCount,
-  //             knock: PLAYERS[clientIp].knock,
-  //           },
-  //         })
-  //       );
-  //     } else if (header === 'sendKey') {
-  //       var code = data.code;
-  //       var status = data.status;
-  //       if (code == 65 || code == 37) {
-  //         PLAYERS[clientIp].moveLeft = status;
-  //       }
-  //       if (code == 68 || code == 39) {
-  //         PLAYERS[clientIp].moveRight = status;
-  //       } else if (code == 87 || code == 38) {
-  //         PLAYERS[clientIp].moveUp = status;
-  //       } else if (code == 83 || code == 40) {
-  //         PLAYERS[clientIp].moveDown = status;
-  //       } else if (code == 16) {
-  //         PLAYERS[clientIp].run = status;
-  //       }
-  //       broadCast(
-  //         JSON.stringify({
-  //           header: 'updateMovement',
-  //           data: {
-  //             ip: clientIp,
-  //             x: PLAYERS[clientIp].x,
-  //             y: PLAYERS[clientIp].y,
-  //             moveLeft: PLAYERS[clientIp].moveLeft,
-  //             moveRight: PLAYERS[clientIp].moveRight,
-  //             moveUp: PLAYERS[clientIp].moveUp,
-  //             moveDown: PLAYERS[clientIp].moveDown,
-  //             run: PLAYERS[clientIp].run,
-  //           },
-  //         })
-  //       );
-  //     } else if (header === 'rot') {
-  //       PLAYERS[clientIp].rot = data.rot;
-  //       PLAYERS[clientIp].x = data.x;
-  //       PLAYERS[clientIp].y = data.y;
-  //       broadCast(JSON.stringify({ header: 'updateRot', data: { ip: clientIp, rot: PLAYERS[clientIp].rot } }));
-  //     } else if (header === 'p') {
-  //       connection.send(JSON.stringify({ header: 'p', data: '' }));
-  //     } else if (header === 'chat') {
-  //       broadCast(JSON.stringify({ header: 'chatUpdate', data: { name: PLAYERS[clientIp].name, msg: data } }));
-  //     } else if (header === 'requestUpdate') {
-  //       var sendData2 = [];
-  //       for (var i in PLAYERS) {
-  //         sendData2.push({
-  //           ip: PLAYERS[i].ip,
-  //           x: PLAYERS[i].x,
-  //           y: PLAYERS[i].y,
-  //         });
-  //       }
-  //       connection.send(JSON.stringify({ header: 'requestUpdate', data: sendData2 }));
-  //     } else if (header === 'chatting') {
-  //       PLAYERS[clientIp].moveLeft = false;
-  //       PLAYERS[clientIp].moveRight = false;
-  //       PLAYERS[clientIp].moveUp = false;
-  //       PLAYERS[clientIp].moveDown = false;
-  //       PLAYERS[clientIp].run = false;
-  //       broadCast(
-  //         JSON.stringify({
-  //           header: 'updateMovement',
-  //           data: {
-  //             ip: clientIp,
-  //             x: PLAYERS[clientIp].x,
-  //             y: PLAYERS[clientIp].y,
-  //             moveLeft: PLAYERS[clientIp].moveLeft,
-  //             moveRight: PLAYERS[clientIp].moveRight,
-  //             moveUp: PLAYERS[clientIp].moveUp,
-  //             moveDown: PLAYERS[clientIp].moveDown,
-  //             run: PLAYERS[clientIp].run,
-  //           },
-  //         })
-  //       );
-  //     }
-  //   });
-  // });
-};
-
-const velX = 3.0;
-const velY = 13.0;
-const friction = 0.85;
-
-var tick = 0;
-
-export { createGameRoom, GameRoom };
+export default GameRoom;

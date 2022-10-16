@@ -1,3 +1,5 @@
+import { connection } from 'websocket';
+
 // Maps
 export type MapTile = {
   id: number;
@@ -33,7 +35,7 @@ export type GameInfo = {
 // Players
 export type PlayerOptions = {
   playerName: string;
-  ip?: string;
+  connection?: connection;
 };
 
 export type InputController = {
@@ -75,14 +77,24 @@ export type ChatMessage = {
   message: string;
 };
 
+export type JoinMessage = {
+  gameId: number | string;
+  playerName: string;
+};
+
 export enum GameMessageType {
+  PING,
+  JOIN,
+  LOAD_MAP,
   CHAT,
   PLAYER_UPDATE,
+  ATTACK,
+  INPUT,
 }
 
 export type GameMessage = {
   gameId: number | string;
   event: keyof typeof GameMessageType;
   playerId?: number | string;
-  data: PlayerUpdate[] | ChatMessage;
+  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage;
 };

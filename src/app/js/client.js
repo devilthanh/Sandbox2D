@@ -1,24 +1,3 @@
-//document.addEventListener('contextmenu', event => event.preventDefault());
-var firebaseConfig = {
-  apiKey: 'AIzaSyBCHZnGJXiu8l5qNZppgLaoV0p321-dQyg',
-  authDomain: 'strategy-battles-fa32d.firebaseapp.com',
-  databaseURL: 'https://strategy-battles-fa32d.firebaseio.com',
-  projectId: 'strategy-battles-fa32d',
-  storageBucket: 'strategy-battles-fa32d.appspot.com',
-  messagingSenderId: '703940639443',
-  appId: '1:703940639443:web:59220f0dda069a7fe5b226',
-};
-firebase.initializeApp(firebaseConfig);
-
-// var test = 0;
-
-// var count = 0;
-// var lastTimePing = Date.now();
-
-// const ping = firebase.database().ref().child('ping');
-
-///////////////////////////////////////////////////////////////////////
-
 var canvas = document.querySelector('canvas');
 canvas.width = canvas.offsetWidth;
 canvas.height = canvas.offsetHeight;
@@ -337,10 +316,6 @@ connection.addEventListener('message', event => {
     playerID = data.id;
     loadMap();
     var name = playerID.replace(/\./g, '-');
-    test = firebase
-      .database()
-      .ref()
-      .child(name + '/rot');
   } else if (header === 'chatUpdate') {
     var chatBox = document.getElementById('chatBox');
     chatBox.innerHTML =
@@ -730,7 +705,6 @@ lastTime = Date.now();
       connection.send(
         JSON.stringify({ header: 'rot', data: { rot: playerRot, x: PLAYERS[playerID].x, y: PLAYERS[playerID].y } })
       );
-      test.set(playerRot);
     }
     if (PLAYERS[playerID] != undefined)
       if (!PLAYERS[playerID].onAttack && onMouse)
@@ -839,13 +813,5 @@ window.onmousemove = function (e) {
 };
 
 window.requestAnimationFrame(gameDrawLoop);
-setInterval(gameLoop, 1000 / 60);
+setInterval(gameLoop, 1000 / 30);
 setInterval(requestUpdate, 1000);
-
-///////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////
-
-// ping.on('value', snap => {
-// console.log(Date.now()-lastTime);
-// });
