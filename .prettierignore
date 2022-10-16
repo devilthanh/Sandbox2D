@@ -1,0 +1,12 @@
+package.json
+build
+dist
+yarn.lock
+src/api
+src/games/scratch-cards/animations
+package-lock.json
+.gitignore
+.husky
+.prettierignore
+src/app
+!src/app/index.html

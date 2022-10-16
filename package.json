@@ -3,15 +3,46 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon --exec ts-node ./src/server/server.ts",
+    "start": "nodemon ./dist/server.js",
+    "prod": "npm run build && npm run start",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --fix",
+    "pretty": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\"",
+    "prepare": "husky install"
+  },
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^2.1.1",
     "websocket": "^1.0.28"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "devDependencies": {
+    "@types/express": "^4.17.14",
+    "@types/node": "^18.11.0",
+    "@typescript-eslint/eslint-plugin": "^5.40.0",
+    "@typescript-eslint/parser": "^5.40.0",
+    "@types/websocket": "^1.0.5",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.25.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.30.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "2.7.1",
+    "ts-loader": "^9.4.1",
+    "ts-node": "^10.9.1",
+    "typescipt": "^1.0.0",
+    "typescript": "^4.8.4"
   },
-  "author": "",
-  "license": "ISC"
+  "lint-staged": {
+    "*.{tsx,ts,js,jsx}": [
+      "npm run pretty",
+      "npm run lint"
+    ],
+    "*.{yml,yaml,json}": [
+      "npm run pretty"
+    ]
+  }
 }
