@@ -38,6 +38,9 @@
     "typescipt": "^1.0.0",
     "typescript": "^4.8.4"
   },
+  "engines": {
+    "node": "16.x"
+  },
   "lint-staged": {
     "*.{tsx,ts,js,jsx}": [
       "npm run pretty",

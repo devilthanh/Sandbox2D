@@ -45,6 +45,8 @@ export type InputController = {
   moveRight?: boolean;
   moveUp?: boolean;
   moveDown?: boolean;
+  running?: boolean;
+  onAttack?: boolean;
 };
 
 export type PlayerUpdate = {
@@ -83,7 +85,7 @@ export enum ChatChannel {
 
 export type ChatMessage = {
   channel: keyof typeof ChatChannel;
-  playerName: string;
+  playerName?: string;
   message: string;
 };
 
@@ -94,6 +96,11 @@ export type JoinMessage = {
 
 export type PingMessage = {
   latency: number;
+};
+
+export type AttackMessage = {
+  type: 'NORMAL' | 'HEAVY';
+  rotate: number;
 };
 
 export enum GameMessageType {
@@ -110,5 +117,5 @@ export type GameMessage = {
   roomId: string;
   event: keyof typeof GameMessageType;
   playerId?: string;
-  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage | PingMessage | InputController;
+  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage | PingMessage | AttackMessage | InputController;
 };

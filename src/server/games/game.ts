@@ -125,18 +125,18 @@ class GameRoom {
 
       if (player.knockTime > 0) player.knockTime -= 1;
 
-      if (player.knockTime == 0) {
+      if (player.knockTime === 0) {
         if (player.inputController.moveLeft) {
-          player.velocity.x -= 3 - 1.5 * (player.isRunning ? 1 : 0);
+          player.velocity.x -= 1;
         }
         if (player.inputController.moveRight) {
-          player.velocity.x += 3 - 1.5 * (player.isRunning ? 1 : 0);
+          player.velocity.x += 1;
         }
         if (player.inputController.moveUp) {
-          player.velocity.y -= 3 - 1.5 * (player.isRunning ? 1 : 0);
+          player.velocity.y -= 1;
         }
         if (player.inputController.moveDown) {
-          player.velocity.y += 3 - 1.5 * (player.isRunning ? 1 : 0);
+          player.velocity.y += 1;
         }
 
         player.velocity = normalizeVector2(player.velocity);
@@ -144,16 +144,19 @@ class GameRoom {
         player.velocity = normalizeVector2({ x: Math.sin(player.knockDir) * 7, y: -Math.cos(player.knockDir) * 7 });
       }
 
-      var ox = player.velocity.x == 0 ? 0 : player.velocity.x < 0 ? -12 : 12;
-      var oy = player.velocity.y == 0 ? 0 : player.velocity.y < 0 ? -12 : 12;
-      var x = toTile(player.position.x, this._map);
-      var x1 = toTile(player.position.x - 12, this._map);
-      var x2 = toTile(player.position.x + 12, this._map);
-      var xh = toTile(player.position.x + player.velocity.x + ox, this._map);
-      var y = toTile(player.position.y, this._map);
-      var y1 = toTile(player.position.y - 12, this._map);
-      var y2 = toTile(player.position.y + 12, this._map);
-      var yv = toTile(player.position.y + player.velocity.y + oy, this._map);
+      player.velocity.x *= 4 + (player.inputController.running ? 3 : 0);
+      player.velocity.y *= 4 + (player.inputController.running ? 3 : 0);
+
+      const ox = player.velocity.x === 0 ? 0 : player.velocity.x < 0 ? -12 : 12;
+      const oy = player.velocity.y === 0 ? 0 : player.velocity.y < 0 ? -12 : 12;
+      const x = toTile(player.position.x, this._map);
+      const x1 = toTile(player.position.x - 12, this._map);
+      const x2 = toTile(player.position.x + 12, this._map);
+      const xh = toTile(player.position.x + player.velocity.x + ox, this._map);
+      const y = toTile(player.position.y, this._map);
+      const y1 = toTile(player.position.y - 12, this._map);
+      const y2 = toTile(player.position.y + 12, this._map);
+      const yv = toTile(player.position.y + player.velocity.y + oy, this._map);
 
       if (player.position.x + player.velocity.x - 32 < 0 || player.position.x + player.velocity.x + 32 >= this._mapW) {
         player.velocity.x = 0;
@@ -162,23 +165,23 @@ class GameRoom {
         player.velocity.y = 0;
       }
 
-      // if (player.velocity.x != 0 || player.velocity.y != 0) {
-      //   if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
-      //     player.velocity.x = 0;
-      //   }
-      //   if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
-      //     player.velocity.y = 0;
-      //   }
-      // }
+      if (player.velocity.x != 0 || player.velocity.y != 0) {
+        if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
+          player.velocity.x = 0;
+        }
+        if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
+          player.velocity.y = 0;
+        }
+      }
 
       player.position.x += player.velocity.x;
       player.position.y += player.velocity.y;
       player.fakeRotate = player.rotate;
 
       if (player.onAttack) {
-        if (player.attackStage == 3) {
+        if (player.attackStage === 3) {
           player.fakeRotate += 0.2 * (5 - player.attackCount);
-        } else if (player.attackStage == 2) {
+        } else if (player.attackStage === 2) {
           player.fakeRotate -= 0.4 * (5 - player.attackCount) - 0.2 * 5;
           for (const otherPlayer of this._players) {
             if (player.id != otherPlayer.id) {
@@ -220,7 +223,7 @@ class GameRoom {
               }
             }
           }
-        } else if (player.attackStage == 1) {
+        } else if (player.attackStage === 1) {
           player.fakeRotate += 0.1 * (10 - player.attackCount) - 0.1 * 10;
         }
 
@@ -231,13 +234,12 @@ class GameRoom {
         player.attackCount -= 1;
         if (player.attackCount < 0) {
           player.attackStage -= 1;
-          if (player.attackStage == 2) player.attackCount = 5;
-          else if (player.attackStage == 1) player.attackCount = 10;
+          if (player.attackStage === 2) player.attackCount = 2;
+          else if (player.attackStage === 1) player.attackCount = 5;
         }
 
-        if (player.attackStage == 0) {
+        if (player.attackStage === 0) {
           player.onAttack = false;
-          player.attackStage = 0;
           player.attackCount = 0;
         }
       }

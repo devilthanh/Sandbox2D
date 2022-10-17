@@ -172,12 +172,12 @@
 //     for (var y = 0; y < this._gameMap.height; y++)
 //       for (var x = 0; x < this._gameMap.width; x++) {
 //         this._gameMap.data[y][x].sd = 0;
-//         if (this._gameMap.data[y][x].type == 1 || this._gameMap.data[y][x].type == 5) this._gameMap.data[y][x].sd = 2;
-//         if (this._gameMap.data[y][x].type == 2) this._gameMap.data[y][x].sd = 1;
+//         if (this._gameMap.data[y][x].type === 1 || this._gameMap.data[y][x].type === 5) this._gameMap.data[y][x].sd = 2;
+//         if (this._gameMap.data[y][x].type === 2) this._gameMap.data[y][x].sd = 1;
 
 //         var sd = 0;
 
-//         if (this._gameMap.data[y][x].sd == 0) {
+//         if (this._gameMap.data[y][x].sd === 0) {
 //           if (x - 1 >= 0) sd += this._gameMap.data[y][x - 1].sd * 3;
 //           if (y - 1 >= 0) sd += this._gameMap.data[y - 1][x].sd;
 //           if (x - 1 >= 0 && y - 1 >= 0) sd += this._gameMap.data[y - 1][x - 1].sd * 9;
@@ -248,7 +248,7 @@
 //             default:
 //               this._gameMap.data[y][x].sdId = -1;
 //           }
-//         } else if (this._gameMap.data[y][x].sd == 1) {
+//         } else if (this._gameMap.data[y][x].sd === 1) {
 //           if (x - 1 >= 0) sd += Math.floor(this._gameMap.data[y][x - 1].sd / 2) * 2;
 //           if (y - 1 >= 0) sd += Math.floor(this._gameMap.data[y - 1][x].sd / 2);
 //           if (x - 1 >= 0 && y - 1 >= 0) sd += Math.floor(this._gameMap.data[y - 1][x - 1].sd / 2) * 4;
@@ -335,7 +335,7 @@
 //           var tileId = this._gameMap.data[y][x].id;
 //           var tileType = this._gameMap.data[y][x].type;
 
-//           if (style === 'tileshadow_obstacle' && this._gameMap.data[y][x].type == 2)
+//           if (style === 'tileshadow_obstacle' && this._gameMap.data[y][x].type === 2)
 //             this.drawScaleImage(
 //               this._images.tileShadow,
 //               x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
@@ -343,7 +343,7 @@
 //               36,
 //               36
 //             );
-//           else if (style === 'tileshadow_wall' && this._gameMap.data[y][x].type == 1)
+//           else if (style === 'tileshadow_wall' && this._gameMap.data[y][x].type === 1)
 //             this.drawScaleImage(
 //               this._images.tileShadow,
 //               x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
@@ -351,7 +351,7 @@
 //               36,
 //               36
 //             );
-//           else if (style === 'floor' && (this._gameMap.data[y][x].type == 0 || this._gameMap.data[y][x].type >= 10))
+//           else if (style === 'floor' && (this._gameMap.data[y][x].type === 0 || this._gameMap.data[y][x].type >= 10))
 //             this.drawScaleCropImage(
 //               this._images.tileset,
 //               this._images.tiles[tileId].x,
@@ -363,7 +363,7 @@
 //               this._gameMap.tileWidth,
 //               this._gameMap.tileHeight
 //             );
-//           else if (style === 'obstacle' && this._gameMap.data[y][x].type == 2)
+//           else if (style === 'obstacle' && this._gameMap.data[y][x].type === 2)
 //             this.drawScaleCropImage(
 //               this._images.tileset,
 //               this._images.tiles[tileId].x,
@@ -375,7 +375,7 @@
 //               this._gameMap.tileWidth,
 //               this._gameMap.tileHeight
 //             );
-//           else if (style === 'wall' && this._gameMap.data[y][x].type == 1)
+//           else if (style === 'wall' && this._gameMap.data[y][x].type === 1)
 //             this.drawScaleCropImage(
 //               this._images.tileset,
 //               this._images.tiles[tileId].x,
@@ -452,7 +452,7 @@
 //       for (var y = startY; y < endY; y++)
 //         for (var x = startX; x < endX; x++) {
 //           this._context2D.beginPath();
-//           if (this._gameMap.data[y][x].sd == 0 && this._gameMap.data[y][x].sdId >= 0) {
+//           if (this._gameMap.data[y][x].sd === 0 && this._gameMap.data[y][x].sdId >= 0) {
 //             this.drawScaleCropImage(
 //               this._images.mapShadow,
 //               this._images.shadows[this._gameMap.data[y][x].sdId].x,
@@ -464,7 +464,7 @@
 //               this._gameMap.tileWidth,
 //               this._gameMap.tileHeight
 //             );
-//           } else if (this._gameMap.data[y][x].sd == 1 && this._gameMap.data[y][x].sdId >= 0) {
+//           } else if (this._gameMap.data[y][x].sd === 1 && this._gameMap.data[y][x].sdId >= 0) {
 //             this.drawScaleCropImage(
 //               this._images.mapShadow,
 //               this._images.shadows[this._gameMap.data[y][x].sdId].x,

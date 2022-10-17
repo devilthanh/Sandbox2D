@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { Server } from 'http';
 import { IUtf8Message, server as WebSocketServer } from 'websocket';
-import { SERVER_PORT } from '../config/server';
+import { SERVER_PORT } from '../config/config';
 import { GameMessage, GameOptions, JoinMessage, PlayerOptions } from './definitions/type';
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
@@ -15,6 +15,15 @@ const createServer = (): express.Application => {
 
   server.listen(SERVER_PORT, () => {
     console.log(`Server listening on ${SERVER_PORT}`);
+  });
+
+  app.get('/', (req, res, next) => {
+    const gameRoom = gameRooms[0];
+    if (gameRoom) {
+      res.redirect(`/game?roomId=${gameRoom.id}`);
+    } else {
+      next();
+    }
   });
 
   app.get('/game', (req, res, next) => {

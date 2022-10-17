@@ -13,6 +13,7 @@ export const magnitudeVector2 = (vector2: Vector2): number => {
 
 export const normalizeVector2 = (vector2: Vector2): Vector2 => {
   const magnitude = magnitudeVector2(vector2);
+  if (magnitude === 0) return vector2;
   return {
     x: vector2.x / magnitude,
     y: vector2.y / magnitude,

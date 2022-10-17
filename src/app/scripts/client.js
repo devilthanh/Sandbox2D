@@ -184,12 +184,12 @@
 //   for (var y = 0; y < mapHeight; y++)
 //     for (var x = 0; x < mapWidth; x++) {
 //       map[y][x].sd = 0;
-//       if (map[y][x].type == 1 || map[y][x].type == 5) map[y][x].sd = 2;
-//       if (map[y][x].type == 2) map[y][x].sd = 1;
+//       if (map[y][x].type === 1 || map[y][x].type === 5) map[y][x].sd = 2;
+//       if (map[y][x].type === 2) map[y][x].sd = 1;
 
 //       var sd = 0;
 
-//       if (map[y][x].sd == 0) {
+//       if (map[y][x].sd === 0) {
 //         if (x - 1 >= 0) sd += map[y][x - 1].sd * 3;
 //         if (y - 1 >= 0) sd += map[y - 1][x].sd;
 //         if (x - 1 >= 0 && y - 1 >= 0) sd += map[y - 1][x - 1].sd * 9;
@@ -260,7 +260,7 @@
 //           default:
 //             map[y][x].sdId = -1;
 //         }
-//       } else if (map[y][x].sd == 1) {
+//       } else if (map[y][x].sd === 1) {
 //         if (x - 1 >= 0) sd += Math.floor(map[y][x - 1].sd / 2) * 2;
 //         if (y - 1 >= 0) sd += Math.floor(map[y - 1][x].sd / 2);
 //         if (x - 1 >= 0 && y - 1 >= 0) sd += Math.floor(map[y - 1][x - 1].sd / 2) * 4;
@@ -415,7 +415,7 @@
 //         var tileId = map[y][x].id;
 //         var tileType = map[y][x].type;
 
-//         if (style === 'tileshadow_obstacle' && map[y][x].type == 2)
+//         if (style === 'tileshadow_obstacle' && map[y][x].type === 2)
 //           drawScaleImage(
 //             Img.tileShadow,
 //             x * mapTileWidth - PLAYERS[playerID].x + canvas.width / 2 - 2,
@@ -423,7 +423,7 @@
 //             36,
 //             36
 //           );
-//         else if (style === 'tileshadow_wall' && map[y][x].type == 1)
+//         else if (style === 'tileshadow_wall' && map[y][x].type === 1)
 //           drawScaleImage(
 //             Img.tileShadow,
 //             x * mapTileWidth - PLAYERS[playerID].x + canvas.width / 2 - 2,
@@ -431,7 +431,7 @@
 //             36,
 //             36
 //           );
-//         else if (style === 'floor' && (map[y][x].type == 0 || map[y][x].type >= 10))
+//         else if (style === 'floor' && (map[y][x].type === 0 || map[y][x].type >= 10))
 //           drawScaleCropImage(
 //             Img.tileset,
 //             Img.tiles[tileId].x,
@@ -443,7 +443,7 @@
 //             mapTileWidth,
 //             mapTileHeight
 //           );
-//         else if (style === 'obstacle' && map[y][x].type == 2)
+//         else if (style === 'obstacle' && map[y][x].type === 2)
 //           drawScaleCropImage(
 //             Img.tileset,
 //             Img.tiles[tileId].x,
@@ -455,7 +455,7 @@
 //             mapTileWidth,
 //             mapTileHeight
 //           );
-//         else if (style === 'wall' && map[y][x].type == 1)
+//         else if (style === 'wall' && map[y][x].type === 1)
 //           drawScaleCropImage(
 //             Img.tileset,
 //             Img.tiles[tileId].x,
@@ -475,7 +475,7 @@
 // playersUpdate = function () {
 //   for (i in PLAYERS) {
 //     var rot;
-//     if (!PLAYERS[i].onAttack) rot = PLAYERS[i].id == playerID ? playerRot : PLAYERS[i].rot;
+//     if (!PLAYERS[i].onAttack) rot = PLAYERS[i].id === playerID ? playerRot : PLAYERS[i].rot;
 //     else rot = PLAYERS[i].fakerot;
 //     c.beginPath();
 //     c.save();
@@ -508,7 +508,7 @@
 //     for (var y = startY; y < endY; y++)
 //       for (var x = startX; x < endX; x++) {
 //         c.beginPath();
-//         if (map[y][x].sd == 0 && map[y][x].sdId >= 0) {
+//         if (map[y][x].sd === 0 && map[y][x].sdId >= 0) {
 //           drawScaleCropImage(
 //             Img.mapShadow,
 //             Img.shadows[map[y][x].sdId].x,
@@ -520,7 +520,7 @@
 //             mapTileWidth,
 //             mapTileHeight
 //           );
-//         } else if (map[y][x].sd == 1 && map[y][x].sdId >= 0) {
+//         } else if (map[y][x].sd === 1 && map[y][x].sdId >= 0) {
 //           drawScaleCropImage(
 //             Img.mapShadow,
 //             Img.shadows[map[y][x].sdId].x,
@@ -597,7 +597,7 @@
 //       if (!pingSent) {
 //         pingSent = true;
 //         pingTime = Date.now();
-//         if (connection.readyState == connection.OPEN) connection.send(JSON.stringify({ header: 'p', data: '' }));
+//         if (connection.readyState === connection.OPEN) connection.send(JSON.stringify({ header: 'p', data: '' }));
 //       }
 
 //       // ping.set(count);
@@ -616,7 +616,7 @@
 
 //         if (PLAYERS[i].knockTime > 0) PLAYERS[i].knockTime -= 1;
 
-//         if (PLAYERS[i].knockTime == 0) {
+//         if (PLAYERS[i].knockTime === 0) {
 //           if (PLAYERS[i].moveLeft) {
 //             h -= 3 - 1.5 * PLAYERS[i].run;
 //           }
@@ -639,8 +639,8 @@
 //           v = -Math.cos(PLAYERS[i].knockDir) * 7;
 //         }
 
-//         var ox = h == 0 ? 0 : h < 0 ? -12 : 12;
-//         var oy = v == 0 ? 0 : v < 0 ? -12 : 12;
+//         var ox = h === 0 ? 0 : h < 0 ? -12 : 12;
+//         var oy = v === 0 ? 0 : v < 0 ? -12 : 12;
 //         var x = toTile(PLAYERS[i].x);
 //         var x1 = toTile(PLAYERS[i].x - 12);
 //         var x2 = toTile(PLAYERS[i].x + 12);
@@ -672,11 +672,11 @@
 //         PLAYERS[i].fakerot = PLAYERS[i].rot;
 
 //         if (PLAYERS[i].onAttack) {
-//           if (PLAYERS[i].attackStage == 3) {
+//           if (PLAYERS[i].attackStage === 3) {
 //             PLAYERS[i].fakerot += 0.2 * (5 - PLAYERS[i].attackCount);
-//           } else if (PLAYERS[i].attackStage == 2) {
+//           } else if (PLAYERS[i].attackStage === 2) {
 //             PLAYERS[i].fakerot -= 0.4 * (5 - PLAYERS[i].attackCount) - 0.2 * 5;
-//           } else if (PLAYERS[i].attackStage == 1) {
+//           } else if (PLAYERS[i].attackStage === 1) {
 //             PLAYERS[i].fakerot += 0.1 * (10 - PLAYERS[i].attackCount) - 0.1 * 10;
 //           }
 
@@ -687,11 +687,11 @@
 //           PLAYERS[i].attackCount -= 1;
 //           if (PLAYERS[i].attackCount < 0) {
 //             PLAYERS[i].attackStage -= 1;
-//             if (PLAYERS[i].attackStage == 2) PLAYERS[i].attackCount = 5;
-//             else if (PLAYERS[i].attackStage == 1) PLAYERS[i].attackCount = 10;
+//             if (PLAYERS[i].attackStage === 2) PLAYERS[i].attackCount = 5;
+//             else if (PLAYERS[i].attackStage === 1) PLAYERS[i].attackCount = 10;
 //           }
 
-//           if (PLAYERS[i].attackStage == 0) {
+//           if (PLAYERS[i].attackStage === 0) {
 //             PLAYERS[i].onAttack = false;
 //             PLAYERS[i].attackStage = 0;
 //             PLAYERS[i].attackCount = 0;
@@ -701,34 +701,34 @@
 //       tick = tick + 1;
 //     }
 
-//     if (connection.readyState == connection.OPEN && PLAYERS[playerID] != undefined) {
+//     if (connection.readyState === connection.OPEN && PLAYERS[playerID] != undefined) {
 //       connection.send(
 //         JSON.stringify({ header: 'rot', data: { rot: playerRot, x: PLAYERS[playerID].x, y: PLAYERS[playerID].y } })
 //       );
 //     }
 //     if (PLAYERS[playerID] != undefined)
 //       if (!PLAYERS[playerID].onAttack && onMouse)
-//         if (connection.readyState == connection.OPEN)
+//         if (connection.readyState === connection.OPEN)
 //           connection.send(JSON.stringify({ header: 'sendMouse', data: '' }));
 //   }),
 //   (window.onkeydown = window.onkeyup =
 //     function (event) {
 //       event = event || window.event;
 //       var target = event.target || event.srcElement;
-//       var targetTagName = target.nodeType == 1 ? target.nodeName.toUpperCase() : '';
-//       keys[event.keyCode] = event.type == 'keydown';
+//       var targetTagName = target.nodeType === 1 ? target.nodeName.toUpperCase() : '';
+//       keys[event.keyCode] = event.type === 'keydown';
 //       var code = event.keyCode;
 //       if (
 //         !chatting &&
-//         (code == 65 ||
-//           code == 37 ||
-//           code == 68 ||
-//           code == 39 ||
-//           code == 87 ||
-//           code == 38 ||
-//           code == 83 ||
-//           code == 40 ||
-//           code == 16)
+//         (code === 65 ||
+//           code === 37 ||
+//           code === 68 ||
+//           code === 39 ||
+//           code === 87 ||
+//           code === 38 ||
+//           code === 83 ||
+//           code === 40 ||
+//           code === 16)
 //       ) {
 //         connection.send(
 //           JSON.stringify({
@@ -740,22 +740,22 @@
 //           })
 //         );
 //         if (PLAYERS[playerID] != undefined) {
-//           if (code == 65 || code == 37) {
+//           if (code === 65 || code === 37) {
 //             PLAYERS[playerID].moveLeft = keys[code];
 //           }
-//           if (code == 68 || code == 39) {
+//           if (code === 68 || code === 39) {
 //             PLAYERS[playerID].moveRight = keys[code];
-//           } else if (code == 87 || code == 38) {
+//           } else if (code === 87 || code === 38) {
 //             PLAYERS[playerID].moveUp = keys[code];
-//           } else if (code == 83 || code == 40) {
+//           } else if (code === 83 || code === 40) {
 //             PLAYERS[playerID].moveDown = keys[code];
-//           } else if (code == 16) {
+//           } else if (code === 16) {
 //             PLAYERS[playerID].run = keys[code];
 //           }
 //         }
 //       }
 
-//       if (event.keyCode == 13) {
+//       if (event.keyCode === 13) {
 //         if (keys[event.keyCode]) {
 //           if (!chatting) {
 //             document.getElementById('chatMsg').focus();
@@ -771,7 +771,7 @@
 //             document.getElementById('chatMsg').blur();
 //           }
 //         }
-//       } else if (event.keyCode == 27) {
+//       } else if (event.keyCode === 27) {
 //         chatting = false;
 //         document.getElementById('chatMsg').blur();
 //         document.getElementById('chatMsg').value = '';
@@ -780,7 +780,7 @@
 
 // chatFocus = function () {
 //   chatting = true;
-//   if (connection.readyState == connection.OPEN) connection.send(JSON.stringify({ header: 'chatting', data: '' }));
+//   if (connection.readyState === connection.OPEN) connection.send(JSON.stringify({ header: 'chatting', data: '' }));
 // };
 
 // chatUnFocus = function () {
@@ -788,7 +788,7 @@
 // };
 
 // requestUpdate = function () {
-//   if (connection.readyState == connection.OPEN)
+//   if (connection.readyState === connection.OPEN)
 //     connection.send(
 //       JSON.stringify({
 //         header: 'requestUpdate',

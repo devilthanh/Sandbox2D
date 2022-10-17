@@ -1,5 +1,13 @@
 import { connection, IUtf8Message } from 'websocket';
-import { PlayerOptions, InputController, Vector2, GameMessage, ChatMessage, PingMessage } from '../definitions/type';
+import {
+  PlayerOptions,
+  InputController,
+  Vector2,
+  GameMessage,
+  ChatMessage,
+  PingMessage,
+  AttackMessage,
+} from '../definitions/type';
 import GameRoom from './game';
 import { randomInt, getCurrentTickInNanos, NS_PER_SEC, walkable } from './gameUtils';
 
@@ -23,7 +31,6 @@ class Player {
   public sheild: number;
   public maxSheild: number;
   public velocity: Vector2;
-  public isRunning: boolean;
   public onAttack: boolean;
   public attackStage: number;
   public attackCount: number;
@@ -39,7 +46,7 @@ class Player {
     this._id = getCurrentTickInNanos().toString();
     this._isBot = this._ip === undefined;
     this._tick = getCurrentTickInNanos();
-    this._inputController = { moveLeft: false, moveRight: false, moveUp: false, moveDown: false };
+    this._inputController = { moveLeft: false, moveRight: false, moveUp: false, moveDown: false, running: false };
     this._latency = 0;
     this.position = { x: 0, y: 0 };
     this.rotate = 0;
@@ -50,7 +57,6 @@ class Player {
     this.sheild = 0;
     this.maxSheild = 0;
     this.velocity = { x: 0, y: 0 };
-    this.isRunning = false;
     this.onAttack = false;
     this.attackStage = 0;
     this.attackCount = 0;
@@ -83,7 +89,7 @@ class Player {
   };
 
   public hit = (attackPlayer: Player, dir: number): boolean => {
-    this.knockTime = 20;
+    this.knockTime = 10;
     this.knockDir = dir;
     this.health -= Math.floor(Math.random() * 30);
     if (this.health <= 0) {
@@ -113,11 +119,16 @@ class Player {
         case 'INPUT':
           this._inputController = message.data as InputController;
           break;
-        case 'ATTACK':
-          this.onAttack = true;
-          this.attackStage = 3;
-          this.attackCount = 5;
+        case 'ATTACK': {
+          const attackMessage: AttackMessage = message.data as AttackMessage;
+          if (!this.onAttack) {
+            this.onAttack = true;
+            this.rotate = attackMessage.rotate;
+            this.attackStage = 3;
+            this.attackCount = 3;
+          }
           break;
+        }
       }
     });
   };
@@ -155,7 +166,7 @@ class Player {
         this._inputController.moveDown = false;
     }
 
-    this.isRunning = randomInt(0, 3) === 0 ? true : false;
+    this._inputController.running = randomInt(0, 3) === 0 ? true : false;
     this.onAttack = randomInt(0, 3) === 0 ? true : false;
 
     const rotateVector: Vector2 = { x: 0, y: 0 };
@@ -169,7 +180,7 @@ class Player {
 
     if (this.onAttack) {
       this.attackStage = 3;
-      this.attackCount = 5;
+      this.attackCount = 3;
     }
   };
 
@@ -195,8 +206,8 @@ class Player {
   private spawn = () => {
     var xx, yy;
     do {
-      xx = Math.floor(Math.random() * this._gameRoom.map.width);
-      yy = Math.floor(Math.random() * this._gameRoom.map.height);
+      xx = randomInt(0, this._gameRoom.map.width - 1);
+      yy = randomInt(0, this._gameRoom.map.height - 1);
     } while (!walkable(this._gameRoom.map.data[yy][xx].type) || this._gameRoom.map.data[yy][xx].id === 0);
     this.position.x = xx * this._gameRoom.map.tileWidth + this._gameRoom.map.tileWidth / 2;
     this.position.y = yy * this._gameRoom.map.tileHeight + this._gameRoom.map.tileHeight / 2;

@@ -1,4 +1,11 @@
-import { ChatMessage, GameMap, GameMessage, JoinMessage, PlayerUpdate } from '../../server/definitions/type';
+import {
+  ChatMessage,
+  GameMap,
+  GameMessage,
+  InputController,
+  JoinMessage,
+  PlayerUpdate,
+} from '../../server/definitions/type';
 
 class GameClient {
   private _roomId?: string;
@@ -7,9 +14,12 @@ class GameClient {
   private _pingSent: boolean;
   private _pingTime: number;
   private _latency: number;
-  private _chatBox?: HTMLElement;
+  private _chatBox: HTMLElement;
+  private _chatInput: HTMLInputElement;
   private _players: PlayerUpdate[];
   private _mapRenderer?: MapRenderer;
+  private _clientRotate: number;
+  private _clientInputController: InputController;
 
   constructor() {
     const params = new URLSearchParams(window.location.search);
@@ -17,9 +27,22 @@ class GameClient {
     this._pingSent = false;
     this._pingTime = Date.now();
     this._latency = 0;
-    this._chatBox = document.getElementById('chatBox') || undefined;
+    this._chatBox = document.getElementById('chatBox') as HTMLElement;
+    this._chatInput = document.getElementById('chatMsg') as HTMLInputElement;
     this._players = [];
+    this._clientRotate = 0;
+    this._clientInputController = {
+      moveLeft: false,
+      moveRight: false,
+      moveUp: false,
+      moveDown: false,
+      running: false,
+    };
+    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
+    gameScreen.focus();
     this.initNetworking();
+    this.initInputController();
+    this.initChat();
   }
 
   public get latency() {
@@ -32,6 +55,10 @@ class GameClient {
 
   public get clientPlayer() {
     return this._players.find(player => player.id === this._clientPlayerId);
+  }
+
+  public get clientRotate() {
+    return this._clientRotate;
   }
 
   private initNetworking = () => {
@@ -113,6 +140,123 @@ class GameClient {
     }
   };
 
+  private initInputController = () => {
+    const inputsEqual = (input1: InputController, input2: InputController): boolean => {
+      return (
+        input1.moveLeft === input2.moveLeft &&
+        input1.moveRight === input2.moveRight &&
+        input1.moveUp === input2.moveUp &&
+        input1.moveDown === input2.moveDown &&
+        input1.running === input2.running
+      );
+    };
+
+    const onKeyEvent = (event: KeyboardEvent) => {
+      const key = event.key.toUpperCase();
+      const currentInput: InputController = {
+        moveLeft: this._clientInputController.moveLeft,
+        moveRight: this._clientInputController.moveRight,
+        moveUp: this._clientInputController.moveUp,
+        moveDown: this._clientInputController.moveDown,
+        running: this._clientInputController.running,
+      };
+      switch (key) {
+        case 'A':
+          currentInput.moveLeft = event.type === 'keydown';
+          break;
+        case 'D':
+          currentInput.moveRight = event.type === 'keydown';
+          break;
+        case 'S':
+          currentInput.moveDown = event.type === 'keydown';
+          break;
+        case 'W':
+          currentInput.moveUp = event.type === 'keydown';
+          break;
+        case 'SHIFT':
+          currentInput.running = event.type === 'keydown';
+          break;
+        case 'ENTER':
+          this._chatInput.focus();
+          break;
+      }
+      if (this._roomId && !inputsEqual(currentInput, this._clientInputController)) {
+        this._clientInputController = currentInput;
+        this.sendMessage({
+          roomId: this._roomId,
+          event: 'INPUT',
+          data: this._clientInputController,
+        });
+      }
+    };
+
+    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
+
+    gameScreen.onmousemove = (event: MouseEvent) => {
+      const target = event.target as Element;
+      const rect = target.getBoundingClientRect();
+      const x = event.offsetX;
+      const y = event.offsetY;
+      this._clientRotate = -Math.atan2(rect.width / 2 - x, rect.height / 2 - y);
+    };
+
+    gameScreen.onkeydown = onKeyEvent;
+    gameScreen.onkeyup = onKeyEvent;
+
+    gameScreen.onmousedown = () => {
+      this._roomId &&
+        this.sendMessage({
+          roomId: this._roomId,
+          event: 'ATTACK',
+          data: {
+            type: 'NORMAL',
+            rotate: this._clientRotate,
+          },
+        });
+    };
+
+    gameScreen.oncontextmenu = (event: MouseEvent) => {
+      event.preventDefault();
+      this._roomId &&
+        this.sendMessage({
+          roomId: this._roomId,
+          event: 'ATTACK',
+          data: {
+            type: 'HEAVY',
+            rotate: this._clientRotate,
+          },
+        });
+    };
+  };
+
+  private initChat = () => {
+    this._chatBox.onfocus = (event: FocusEvent) => {
+      event.preventDefault();
+    };
+
+    this._chatBox.onclick = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+
+    this._chatInput.onkeyup = (event: KeyboardEvent) => {
+      const key = event.key.toUpperCase();
+      if (key === 'ENTER' && this._chatInput.value) {
+        this._roomId &&
+          this.sendMessage({
+            roomId: this._roomId,
+            event: 'CHAT',
+            data: {
+              channel: 'GAME_ROOM',
+              message: this._chatInput.value,
+            },
+          });
+        this._chatInput.value = '';
+        const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
+        gameScreen.focus();
+      }
+    };
+  };
+
   private sendMessage = (gameMessage: GameMessage) => {
     this._wsClient?.send(JSON.stringify(gameMessage));
   };
@@ -124,7 +268,6 @@ class MapRenderer {
   private _isMapLoaded: boolean;
   private _isTileLoaded: boolean;
   private _isShadowLoaded: boolean;
-  private _clientRotate: number;
   private _screenTileWidthCount: number;
   private _screenTileHeightCount: number;
   private _canvas?: HTMLCanvasElement;
@@ -143,7 +286,6 @@ class MapRenderer {
     this._isMapLoaded = false;
     this._isTileLoaded = false;
     this._isShadowLoaded = false;
-    this._clientRotate = 0;
     this._currentFps = 0;
     this._fpsCouner = 0;
     this._fpsTime = Date.now();
@@ -165,14 +307,6 @@ class MapRenderer {
     this.initImages();
     this.loadMap();
     window.requestAnimationFrame(this.gameDrawLoop);
-    window.onmousemove = (event: MouseEvent) => {
-      const gameScreen = document.getElementById('gameScreen') || undefined;
-      if (gameScreen) {
-        const x = event.pageX - gameScreen.offsetLeft;
-        const y = event.pageY - gameScreen.offsetTop;
-        this._clientRotate = -Math.atan2(gameScreen.offsetWidth / 2 - x, gameScreen.offsetHeight / 2 - y);
-      }
-    };
     console.log('MapRenderer created');
     console.log(this._gameMap);
   }
@@ -291,12 +425,12 @@ class MapRenderer {
     for (var y = 0; y < this._gameMap.height; y++)
       for (var x = 0; x < this._gameMap.width; x++) {
         this._gameMap.data[y][x].sd = 0;
-        if (this._gameMap.data[y][x].type == 1 || this._gameMap.data[y][x].type == 5) this._gameMap.data[y][x].sd = 2;
-        if (this._gameMap.data[y][x].type == 2) this._gameMap.data[y][x].sd = 1;
+        if (this._gameMap.data[y][x].type === 1 || this._gameMap.data[y][x].type === 5) this._gameMap.data[y][x].sd = 2;
+        if (this._gameMap.data[y][x].type === 2) this._gameMap.data[y][x].sd = 1;
 
         var sd = 0;
 
-        if (this._gameMap.data[y][x].sd == 0) {
+        if (this._gameMap.data[y][x].sd === 0) {
           if (x - 1 >= 0) sd += this._gameMap.data[y][x - 1].sd * 3;
           if (y - 1 >= 0) sd += this._gameMap.data[y - 1][x].sd;
           if (x - 1 >= 0 && y - 1 >= 0) sd += this._gameMap.data[y - 1][x - 1].sd * 9;
@@ -367,7 +501,7 @@ class MapRenderer {
             default:
               this._gameMap.data[y][x].sdId = -1;
           }
-        } else if (this._gameMap.data[y][x].sd == 1) {
+        } else if (this._gameMap.data[y][x].sd === 1) {
           if (x - 1 >= 0) sd += Math.floor(this._gameMap.data[y][x - 1].sd / 2) * 2;
           if (y - 1 >= 0) sd += Math.floor(this._gameMap.data[y - 1][x].sd / 2);
           if (x - 1 >= 0 && y - 1 >= 0) sd += Math.floor(this._gameMap.data[y - 1][x - 1].sd / 2) * 4;
@@ -454,7 +588,7 @@ class MapRenderer {
           var tileId = this._gameMap.data[y][x].id;
           var tileType = this._gameMap.data[y][x].type;
 
-          if (style === 'tileshadow_obstacle' && this._gameMap.data[y][x].type == 2)
+          if (style === 'tileshadow_obstacle' && this._gameMap.data[y][x].type === 2)
             this.drawScaleImage(
               this._images.tileShadow,
               x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
@@ -462,7 +596,7 @@ class MapRenderer {
               36,
               36
             );
-          else if (style === 'tileshadow_wall' && this._gameMap.data[y][x].type == 1)
+          else if (style === 'tileshadow_wall' && this._gameMap.data[y][x].type === 1)
             this.drawScaleImage(
               this._images.tileShadow,
               x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
@@ -470,7 +604,7 @@ class MapRenderer {
               36,
               36
             );
-          else if (style === 'floor' && (this._gameMap.data[y][x].type == 0 || this._gameMap.data[y][x].type >= 10))
+          else if (style === 'floor' && (this._gameMap.data[y][x].type === 0 || this._gameMap.data[y][x].type >= 10))
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,
@@ -482,7 +616,7 @@ class MapRenderer {
               this._gameMap.tileWidth,
               this._gameMap.tileHeight
             );
-          else if (style === 'obstacle' && this._gameMap.data[y][x].type == 2)
+          else if (style === 'obstacle' && this._gameMap.data[y][x].type === 2)
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,
@@ -494,7 +628,7 @@ class MapRenderer {
               this._gameMap.tileWidth,
               this._gameMap.tileHeight
             );
-          else if (style === 'wall' && this._gameMap.data[y][x].type == 1)
+          else if (style === 'wall' && this._gameMap.data[y][x].type === 1)
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,
@@ -517,7 +651,7 @@ class MapRenderer {
       for (const player of this._gameClient.players) {
         let rot: number;
         if (!player.onAttack) {
-          rot = player.id === clientPlayer.id ? this._clientRotate : player.rotate;
+          rot = player.id === clientPlayer.id ? this._gameClient.clientRotate : player.rotate;
         } else {
           rot = player.fakeRotate;
         }
@@ -571,7 +705,7 @@ class MapRenderer {
       for (var y = startY; y < endY; y++)
         for (var x = startX; x < endX; x++) {
           this._context2D.beginPath();
-          if (this._gameMap.data[y][x].sd == 0 && this._gameMap.data[y][x].sdId >= 0) {
+          if (this._gameMap.data[y][x].sd === 0 && this._gameMap.data[y][x].sdId >= 0) {
             this.drawScaleCropImage(
               this._images.mapShadow,
               this._images.shadows[this._gameMap.data[y][x].sdId].x,
@@ -583,7 +717,7 @@ class MapRenderer {
               this._gameMap.tileWidth,
               this._gameMap.tileHeight
             );
-          } else if (this._gameMap.data[y][x].sd == 1 && this._gameMap.data[y][x].sdId >= 0) {
+          } else if (this._gameMap.data[y][x].sd === 1 && this._gameMap.data[y][x].sdId >= 0) {
             this.drawScaleCropImage(
               this._images.mapShadow,
               this._images.shadows[this._gameMap.data[y][x].sdId].x,
