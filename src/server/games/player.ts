@@ -107,6 +107,10 @@ class Player {
         case 'PING': {
           const pingMessage: PingMessage = message.data as PingMessage;
           this._latency = pingMessage.latency;
+          this.sendMessage({
+            roomId: this._gameRoom.id,
+            event: 'PING',
+          });
           break;
         }
         case 'CHAT': {
