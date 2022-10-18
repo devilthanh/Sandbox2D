@@ -16,7 +16,6 @@ const botUpdateSeconds = 3;
 class Player {
   private _id: string;
   private _name: string;
-  private _ip?: string;
   private _isBot: boolean;
   private _tick: number;
   private _gameRoom: GameRoom;
@@ -41,10 +40,9 @@ class Player {
   constructor(gameRoom: GameRoom, playerOptions: PlayerOptions) {
     this._gameRoom = gameRoom;
     this._connection = playerOptions.connection;
-    this._ip = playerOptions.connection?.remoteAddress.split(':')[3];
     this._name = playerOptions.playerName;
     this._id = getCurrentTickInNanos().toString();
-    this._isBot = this._ip === undefined;
+    this._isBot = playerOptions.connection === undefined;
     this._tick = getCurrentTickInNanos();
     this._inputController = { moveLeft: false, moveRight: false, moveUp: false, moveDown: false, running: false };
     this._latency = 0;
@@ -72,12 +70,12 @@ class Player {
     return this._id;
   }
 
-  public get ip() {
-    return this._ip;
-  }
-
   public get name() {
     return this._name;
+  }
+
+  public get ip() {
+    return this._connection?.remoteAddress;
   }
 
   public get inputController() {

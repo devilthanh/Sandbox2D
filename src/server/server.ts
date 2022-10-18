@@ -1,20 +1,26 @@
 import express from 'express';
 import path from 'path';
-import { Server } from 'http';
+import https from 'https';
+import http from 'http';
 import { IUtf8Message, server as WebSocketServer } from 'websocket';
-import { SERVER_PORT } from '../config/config';
-import { GameMessage, GameOptions, JoinMessage, PlayerOptions } from './definitions/type';
+import { HTTPS_SERVER_PORT, HTTP_SERVER_PORT } from '../config/config';
+import { GameMessage, GameOptions, JoinMessage } from './definitions/type';
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
 
 const createServer = (): express.Application => {
   const app = express();
-  const server = new Server(app);
+  const httpsServer = https.createServer(app);
+  const httpServer = http.createServer(app);
   const gameRooms: Array<GameRoom> = [];
-  const wsServer = new WebSocketServer({ httpServer: server });
+  const wsServer = new WebSocketServer({ httpServer: [httpsServer, httpServer] });
 
-  server.listen(SERVER_PORT, () => {
-    console.log(`Server listening on ${SERVER_PORT}`);
+  httpsServer.listen(HTTPS_SERVER_PORT, () => {
+    console.log(`Https Server listening on ${HTTPS_SERVER_PORT}`);
+  });
+
+  httpServer.listen(HTTP_SERVER_PORT, () => {
+    console.log(`Http Server listening on ${HTTP_SERVER_PORT}`);
   });
 
   app.get('/', (req, res, next) => {
@@ -43,7 +49,8 @@ const createServer = (): express.Application => {
 
   wsServer.on('request', request => {
     const connection = request.accept(null, request.origin);
-    const clientIp = connection.remoteAddress.split(':')[3];
+    const clientIp = connection.remoteAddress;
+    console.log(`Client at ${clientIp} connected`);
 
     connection.on('close', (code, desc) => {
       console.log(`Client at ${clientIp} disconnected with [${code}]${desc}`);
