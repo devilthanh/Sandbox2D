@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import https from 'https';
 import http from 'http';
 import { IUtf8Message, server as WebSocketServer } from 'websocket';
 import { SERVER_PORT } from '../config/config';
@@ -10,22 +9,15 @@ import { dust2 } from './maps/dust2';
 
 const createServer = (): express.Application => {
   const app = express();
-  const httpsServer = https.createServer(app);
   const httpServer = http.createServer(app);
   const gameRooms: Array<GameRoom> = [];
-  const wsServer = new WebSocketServer({ httpServer: [httpsServer, httpServer] });
+  const wsServer = new WebSocketServer({ httpServer: httpServer });
 
   console.log(`Server running at ${process.env.NODE_ENV} mode`);
 
-  if (process.env.NODE_ENV === 'production') {
-    httpsServer.listen(SERVER_PORT, () => {
-      console.log(`Https Server listening on ${SERVER_PORT}`);
-    });
-  } else {
-    httpServer.listen(SERVER_PORT, () => {
-      console.log(`Http Server listening on ${SERVER_PORT}`);
-    });
-  }
+  httpServer.listen(SERVER_PORT, () => {
+    console.log(`Http Server listening on ${SERVER_PORT}`);
+  });
 
   app.get('/', (req, res, next) => {
     const gameRoom = gameRooms[0];
