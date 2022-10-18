@@ -34,5 +34,5 @@
     ],
     "react/prop-types": "off"
   },
-  "ignorePatterns": ["**/node_modules/**", "**/src/app/**"]
+  "ignorePatterns": ["**/node_modules/**", "**/src/app/**", "newrelic.js"]
 }

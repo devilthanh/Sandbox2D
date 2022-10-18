@@ -1,3 +1,4 @@
+import newrelic from 'newrelic';
 import express from 'express';
 import path from 'path';
 import http from 'http';
@@ -6,6 +7,8 @@ import { SERVER_PORT } from '../config/config';
 import { GameMessage, GameOptions, JoinMessage } from './definitions/type';
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
+
+newrelic.instrumentLoadedModule('express', express);
 
 const createServer = (): express.Application => {
   const app = express();
