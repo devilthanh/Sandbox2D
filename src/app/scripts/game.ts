@@ -16,6 +16,7 @@ class GameClient {
   private _latency: number;
   private _chatBox: HTMLElement;
   private _chatInput: HTMLInputElement;
+  private _gameScreen: HTMLCanvasElement;
   private _players: PlayerUpdate[];
   private _mapRenderer?: MapRenderer;
   private _clientRotate: number;
@@ -29,6 +30,7 @@ class GameClient {
     this._latency = 0;
     this._chatBox = document.getElementById('chatBox') as HTMLElement;
     this._chatInput = document.getElementById('chatMsg') as HTMLInputElement;
+    this._gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
     this._players = [];
     this._clientRotate = 0;
     this._clientInputController = {
@@ -38,8 +40,7 @@ class GameClient {
       moveDown: false,
       running: false,
     };
-    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-    gameScreen.focus();
+    this._gameScreen.focus();
     this.initNetworking();
     this.initInputController();
     this.initChat();
@@ -190,9 +191,7 @@ class GameClient {
       }
     };
 
-    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-
-    gameScreen.onmousemove = (event: MouseEvent) => {
+    this._gameScreen.onmousemove = (event: MouseEvent) => {
       const target = event.target as Element;
       const rect = target.getBoundingClientRect();
       const x = event.offsetX;
@@ -200,10 +199,10 @@ class GameClient {
       this._clientRotate = -Math.atan2(rect.width / 2 - x, rect.height / 2 - y);
     };
 
-    gameScreen.onkeydown = onKeyEvent;
-    gameScreen.onkeyup = onKeyEvent;
+    this._gameScreen.onkeydown = onKeyEvent;
+    this._gameScreen.onkeyup = onKeyEvent;
 
-    gameScreen.onmousedown = () => {
+    this._gameScreen.onmousedown = () => {
       this._roomId &&
         this.sendMessage({
           roomId: this._roomId,
@@ -215,7 +214,7 @@ class GameClient {
         });
     };
 
-    gameScreen.oncontextmenu = (event: MouseEvent) => {
+    this._gameScreen.oncontextmenu = (event: MouseEvent) => {
       event.preventDefault();
       this._roomId &&
         this.sendMessage({
@@ -231,11 +230,7 @@ class GameClient {
 
   private initChat = () => {
     this._chatBox.onfocus = (event: FocusEvent) => {
-      event.preventDefault();
-    };
-
-    this._chatBox.onclick = (event: MouseEvent) => {
-      event.preventDefault();
+      this._gameScreen.focus();
     };
 
     this._chatInput.onkeyup = (event: KeyboardEvent) => {
@@ -251,8 +246,10 @@ class GameClient {
             },
           });
         this._chatInput.value = '';
-        const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-        gameScreen.focus();
+        this._gameScreen.focus();
+      } else if (key === 'ESCAPE') {
+        this._chatInput.value = '';
+        this._gameScreen.focus();
       }
     };
   };
