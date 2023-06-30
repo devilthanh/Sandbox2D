@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { connection } from 'websocket';
 
 // Maps
@@ -66,6 +67,7 @@ export type PlayerUpdate = {
 
 export type ClientPlayer = PlayerUpdate & {
   networkPosition: Vector2;
+  positionTween: any;
 };
 
 // Physics

@@ -141,14 +141,14 @@ class GameClient {
               if (old != null && player.position != null) {
                 player.position = old.position;
               }
-              const predictionVector = this.latency / 30;
-              const tween = new TWEEN.Tween(player.position)
+              if (player.positionTween != null) player.positionTween.stop();
+              player.positionTween = new TWEEN.Tween(player.position)
                 .to(
                   {
-                    x: player.networkPosition.x + player.velocity.x * predictionVector,
-                    y: player.networkPosition.y + player.velocity.y * predictionVector,
+                    x: player.networkPosition.x,
+                    y: player.networkPosition.y,
                   },
-                  this.latency > 30 ? this.latency : 30
+                  100
                 )
                 .start();
             });

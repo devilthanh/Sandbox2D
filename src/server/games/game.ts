@@ -291,22 +291,23 @@ class GameRoom {
   };
 
   private loop = () => {
-    const now = getCurrentTickInNanos();
-    if (now - this._tick > NS_PER_SEC / serverTick) {
-      this._tick = now;
-      this._tickIndex++;
-      this.gameUpdate();
-    }
+    setInterval(() => this.gameUpdate(), 1000 / serverTick);
+    // const now = getCurrentTickInNanos();
+    // if (now - this._tick > NS_PER_SEC / serverTick) {
+    //   this._tick = now;
+    //   this._tickIndex++;
+    //   this.gameUpdate();
+    // }
 
-    if (now - this._tick < NS_PER_SEC / serverTick - 16 * 1e6) {
-      setTimeout(() => {
-        this.loop();
-      }, 1);
-    } else {
-      setImmediate(() => {
-        this.loop();
-      });
-    }
+    // if (now - this._tick < NS_PER_SEC / serverTick - 16 * 1e6) {
+    //   setTimeout(() => {
+    //     this.loop();
+    //   }, 1);
+    // } else {
+    //   setImmediate(() => {
+    //     this.loop();
+    //   });
+    // }
   };
 }
 
