@@ -20,6 +20,7 @@ class GameClient {
   private _latency: number;
   private _chatBox: HTMLElement;
   private _chatInput: HTMLInputElement;
+  private _gameScreen: HTMLCanvasElement;
   private _players: ClientPlayer[];
   private _mapRenderer?: MapRenderer;
   private _clientRotate: number;
@@ -33,6 +34,7 @@ class GameClient {
     this._latency = 0;
     this._chatBox = document.getElementById('chatBox') as HTMLElement;
     this._chatInput = document.getElementById('chatMsg') as HTMLInputElement;
+    this._gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
     this._players = [];
     this._clientRotate = 0;
     this._clientInputController = {
@@ -42,8 +44,7 @@ class GameClient {
       moveDown: false,
       running: false,
     };
-    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-    gameScreen.focus();
+    this._gameScreen.focus();
     this.initNetworking();
     this.initInputController();
     this.initChat();
@@ -201,9 +202,7 @@ class GameClient {
       }
     };
 
-    const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-
-    gameScreen.onmousemove = (event: MouseEvent) => {
+    this._gameScreen.onmousemove = (event: MouseEvent) => {
       const target = event.target as Element;
       const rect = target.getBoundingClientRect();
       const x = event.offsetX;
@@ -211,10 +210,10 @@ class GameClient {
       this._clientRotate = -Math.atan2(rect.width / 2 - x, rect.height / 2 - y);
     };
 
-    gameScreen.onkeydown = onKeyEvent;
-    gameScreen.onkeyup = onKeyEvent;
+    this._gameScreen.onkeydown = onKeyEvent;
+    this._gameScreen.onkeyup = onKeyEvent;
 
-    gameScreen.onmousedown = () => {
+    this._gameScreen.onmousedown = () => {
       this._roomId &&
         this.sendMessage({
           roomId: this._roomId,
@@ -226,7 +225,7 @@ class GameClient {
         });
     };
 
-    gameScreen.oncontextmenu = (event: MouseEvent) => {
+    this._gameScreen.oncontextmenu = (event: MouseEvent) => {
       event.preventDefault();
       this._roomId &&
         this.sendMessage({
@@ -242,11 +241,7 @@ class GameClient {
 
   private initChat = () => {
     this._chatBox.onfocus = (event: FocusEvent) => {
-      event.preventDefault();
-    };
-
-    this._chatBox.onclick = (event: MouseEvent) => {
-      event.preventDefault();
+      this._gameScreen.focus();
     };
 
     this._chatInput.onkeyup = (event: KeyboardEvent) => {
@@ -262,8 +257,10 @@ class GameClient {
             },
           });
         this._chatInput.value = '';
-        const gameScreen = document.getElementById('gameScreen') as HTMLCanvasElement;
-        gameScreen.focus();
+        this._gameScreen.focus();
+      } else if (key === 'ESCAPE') {
+        this._chatInput.value = '';
+        this._gameScreen.focus();
       }
     };
   };
@@ -549,13 +546,13 @@ class MapRenderer {
     TWEEN.update(time);
     if (this._isMapLoaded && this._isTileLoaded && this._isShadowLoaded && this._canvas && this._context2D) {
       this._context2D.clearRect(0, 0, this._canvas.width, this._canvas.height);
-      this.mapUpdate('floor');
-      this.mapUpdate('tileshadow_obstacle');
-      this.mapUpdate('obstacle');
+      this.mapUpdate('floors');
+      this.mapUpdate('obstacles_outline');
+      this.mapUpdate('obstacles');
       this.shadowUpdate();
       this.playersUpdate();
-      this.mapUpdate('tileshadow_wall');
-      this.mapUpdate('wall');
+      this.mapUpdate('walls_outline');
+      this.mapUpdate('walls');
       this.statsUpdate();
 
       const now = Date.now();
@@ -574,7 +571,7 @@ class MapRenderer {
     window.requestAnimationFrame(this.gameDrawLoop);
   };
 
-  private mapUpdate = (style: 'floor' | 'tileshadow_obstacle' | 'obstacle' | 'tileshadow_wall' | 'wall') => {
+  private mapUpdate = (type: 'floors' | 'obstacles_outline' | 'obstacles' | 'walls_outline' | 'walls') => {
     const clientPlayer = this._gameClient.clientPlayer;
     if (clientPlayer != undefined && this._context2D && this._canvas) {
       var startX = Math.max(
@@ -600,7 +597,15 @@ class MapRenderer {
           var tileId = this._gameMap.data[y][x].id;
           var tileType = this._gameMap.data[y][x].type;
 
-          if (style === 'tileshadow_obstacle' && this._gameMap.data[y][x].type === 2)
+          if (type === 'obstacles_outline' && this._gameMap.data[y][x].type === 2)
+            this.drawScaleImage(
+              this._images.tileShadow,
+              x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 1,
+              y * this._gameMap.tileHeight - clientPlayer.position.y + this._canvas.height / 2 - 1,
+              34,
+              34
+            );
+          else if (type === 'walls_outline' && this._gameMap.data[y][x].type === 1)
             this.drawScaleImage(
               this._images.tileShadow,
               x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
@@ -608,15 +613,7 @@ class MapRenderer {
               36,
               36
             );
-          else if (style === 'tileshadow_wall' && this._gameMap.data[y][x].type === 1)
-            this.drawScaleImage(
-              this._images.tileShadow,
-              x * this._gameMap.tileWidth - clientPlayer.position.x + this._canvas.width / 2 - 2,
-              y * this._gameMap.tileHeight - clientPlayer.position.y + this._canvas.height / 2 - 2,
-              36,
-              36
-            );
-          else if (style === 'floor' && (this._gameMap.data[y][x].type === 0 || this._gameMap.data[y][x].type >= 10))
+          else if (type === 'floors' && (this._gameMap.data[y][x].type === 0 || this._gameMap.data[y][x].type >= 10))
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,
@@ -628,7 +625,7 @@ class MapRenderer {
               this._gameMap.tileWidth,
               this._gameMap.tileHeight
             );
-          else if (style === 'obstacle' && this._gameMap.data[y][x].type === 2)
+          else if (type === 'obstacles' && this._gameMap.data[y][x].type === 2)
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,
@@ -640,7 +637,7 @@ class MapRenderer {
               this._gameMap.tileWidth,
               this._gameMap.tileHeight
             );
-          else if (style === 'wall' && this._gameMap.data[y][x].type === 1)
+          else if (type === 'walls' && this._gameMap.data[y][x].type === 1)
             this.drawScaleCropImage(
               this._images.tileset,
               this._images.tiles[tileId].x,

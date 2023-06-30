@@ -85,6 +85,15 @@ class GameRoom {
         playerId: player.id,
       },
     } as GameMessage);
+    this.broadcast({
+      roomId: this._id,
+      event: 'CHAT',
+      data: {
+        channel: 'GAME_ROOM',
+        playerName: '[System]',
+        message: `Player [${player.id}]${player.name} joined GameRoom [${this._id}]${this._roomName}`,
+      },
+    });
     console.log(`Player [${player.id}]${player.name} joined GameRoom [${this._id}]${this._roomName}`);
     return player;
   };
@@ -94,6 +103,15 @@ class GameRoom {
     if (player) {
       const index = this._players.indexOf(player);
       this._players.splice(index, 1);
+      this.broadcast({
+        roomId: this._id,
+        event: 'CHAT',
+        data: {
+          channel: 'GAME_ROOM',
+          playerName: '[System]',
+          message: `Player [${player.id}]${player.name} left GameRoom [${this._id}]${this._roomName}`,
+        },
+      });
       console.log(`Player [${player.id}]${player.name} left GameRoom [${this._id}]${this._roomName}`);
     }
   };
