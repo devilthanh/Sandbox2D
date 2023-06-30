@@ -226,6 +226,7 @@ class GameRoom {
                           event: 'CHAT',
                           data: {
                             channel: 'GAME_ROOM',
+                            playerName: '[System]',
                             message:
                               '<span style="color:blue">' +
                               player.name +
