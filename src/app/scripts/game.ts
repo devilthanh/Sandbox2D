@@ -4,8 +4,12 @@ import {
   GameMessage,
   InputController,
   JoinMessage,
-  PlayerUpdate,
+  ClientPlayer,
 } from '../../server/definitions/type';
+
+declare global {
+  var TWEEN: any;
+}
 
 class GameClient {
   private _roomId?: string;
@@ -16,7 +20,7 @@ class GameClient {
   private _latency: number;
   private _chatBox: HTMLElement;
   private _chatInput: HTMLInputElement;
-  private _players: PlayerUpdate[];
+  private _players: ClientPlayer[];
   private _mapRenderer?: MapRenderer;
   private _clientRotate: number;
   private _clientInputController: InputController;
@@ -129,7 +133,14 @@ class GameClient {
             this._mapRenderer = new MapRenderer(this, gameMap);
             break;
           case 'PLAYER_UPDATE':
-            const players: PlayerUpdate[] = gameMessage.data as PlayerUpdate[];
+            const players: ClientPlayer[] = gameMessage.data as ClientPlayer[];
+            players.forEach(player => {
+              player.networkPosition = player.position;
+              const old = this._players.find(oldPlayer => oldPlayer.id === player.id);
+              if (old != null && player.position != null) {
+                player.position = old.position;
+              }
+            });
             this._players.splice(0, this._players.length);
             for (const player of players) {
               this._players.push(player);
@@ -534,7 +545,8 @@ class MapRenderer {
     this._isMapLoaded = true;
   };
 
-  private gameDrawLoop = () => {
+  private gameDrawLoop = (time: DOMHighResTimeStamp) => {
+    TWEEN.update(time);
     if (this._isMapLoaded && this._isTileLoaded && this._isShadowLoaded && this._canvas && this._context2D) {
       this._context2D.clearRect(0, 0, this._canvas.width, this._canvas.height);
       this.mapUpdate('floor');
@@ -649,6 +661,7 @@ class MapRenderer {
     const clientPlayer = this._gameClient.clientPlayer;
     if (clientPlayer != undefined && this._context2D && this._canvas) {
       for (const player of this._gameClient.players) {
+        const tween = new TWEEN.Tween(player.position).to(player.networkPosition, 2000 / this._currentFps).start();
         let rot: number;
         if (!player.onAttack) {
           rot = player.id === clientPlayer.id ? this._gameClient.clientRotate : player.rotate;

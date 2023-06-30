@@ -64,6 +64,10 @@ export type PlayerUpdate = {
   inputController: InputController;
 };
 
+export type ClientPlayer = PlayerUpdate & {
+  networkPosition: Vector2;
+};
+
 // Physics
 export type Vector3 = {
   x: number;

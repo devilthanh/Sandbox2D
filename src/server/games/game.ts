@@ -144,8 +144,8 @@ class GameRoom {
         player.velocity = normalizeVector2({ x: Math.sin(player.knockDir) * 7, y: -Math.cos(player.knockDir) * 7 });
       }
 
-      player.velocity.x *= 4 + (player.inputController.running ? 3 : 0);
-      player.velocity.y *= 4 + (player.inputController.running ? 3 : 0);
+      player.velocity.x *= 6 + (player.inputController.running ? 4 : 0);
+      player.velocity.y *= 6 + (player.inputController.running ? 4 : 0);
 
       const ox = player.velocity.x === 0 ? 0 : player.velocity.x < 0 ? -12 : 12;
       const oy = player.velocity.y === 0 ? 0 : player.velocity.y < 0 ? -12 : 12;

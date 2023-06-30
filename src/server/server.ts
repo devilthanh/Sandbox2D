@@ -1,27 +1,13 @@
 import express from 'express';
 import path from 'path';
-import https from 'https';
-import http from 'http';
 import { IUtf8Message, server as WebSocketServer } from 'websocket';
-import { HTTPS_SERVER_PORT, HTTP_SERVER_PORT } from '../config/config';
 import { GameMessage, GameOptions, JoinMessage } from './definitions/type';
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
 
 const createServer = (): express.Application => {
   const app = express();
-  const httpsServer = https.createServer(app);
-  const httpServer = http.createServer(app);
   const gameRooms: Array<GameRoom> = [];
-  const wsServer = new WebSocketServer({ httpServer: [httpsServer, httpServer] });
-
-  httpsServer.listen(HTTPS_SERVER_PORT, () => {
-    console.log(`Https Server listening on ${HTTPS_SERVER_PORT}`);
-  });
-
-  httpServer.listen(HTTP_SERVER_PORT, () => {
-    console.log(`Http Server listening on ${HTTP_SERVER_PORT}`);
-  });
 
   app.get('/', (req, res, next) => {
     const gameRoom = gameRooms[0];
@@ -46,6 +32,12 @@ const createServer = (): express.Application => {
   app.get('*', (_req, res) => {
     res.status(404).sendFile(path.join(__dirname, '..', 'app', '404.html'));
   });
+
+  const server = app.listen(8080, () => {
+    console.log(`GameServer running on port ${8080}`);
+  });
+
+  const wsServer = new WebSocketServer({ httpServer: server });
 
   wsServer.on('request', request => {
     const connection = request.accept(null, request.origin);
@@ -101,6 +93,23 @@ const createServer = (): express.Application => {
     bots: 5,
     autoStart: true,
   });
+
+  const shutDown = () => {
+    console.log('Received kill signal, shutting down gracefully');
+    wsServer.closeAllConnections();
+    server.close(() => {
+      console.log('Closed out remaining connections');
+      process.exit(0);
+    });
+
+    setTimeout(() => {
+      console.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', shutDown);
+  process.on('SIGINT', shutDown);
   return app;
 };
 

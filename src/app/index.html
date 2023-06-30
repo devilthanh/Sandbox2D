@@ -1,103 +1,103 @@
 <!DOCTYPE html>
 
 <html lang="en">
-	<head>
-		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-		<title>Sandbox 2D</title>
-		<style>
-		
-			*:focus{
-				outline: none; 
-			}
-			
-			body{
-				margin:0;
-				padding:0;
-				background-image:url("/client/img/space.jpg");
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				-khtml-user-select: none;
-				-ms-user-select: none;
-			}
-			.gameScreen{
-				padding: 0px;
-				margin: 0px;
-				width: 100%;
-				height: 100%;
-			}
-			
-			.gameScreenContainer{
-				background-image:url("/client/img/dust.png");
-				background: #000000;
-				border-radius: 20px;
-				border: 3px solid #6797FF;
-				width: 1000px;
-				height: 600px;
-				margin-top: 30px;
-				overflow: hidden;
-				position: relative;
-			}
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Sandbox 2D</title>
+    <style>
+      *:focus {
+        outline: none;
+      }
 
-			.chatInput{
-				width: 400px;
-				height: 30px;
-				padding: 10px 10px;
-				border: 2px solid #ccc;
-				border-radius: 4px;
-				box-sizing: border-box;
-				position:absolute;
-				bottom: 0px
-			}
-			
-			.chatArea{
-				padding: 0px;
-				margin: 0px;
-				width: 400px;
-				height: 200px;
-				box-sizing: border-box;
-				position: absolute;
-				left: 20px;
-				bottom: 20px;
-			}		
+      body {
+        margin: 0;
+        padding: 0;
+        background-image: url('/client/img/space.jpg');
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -khtml-user-select: none;
+        -ms-user-select: none;
+      }
+      .gameScreen {
+        padding: 0px;
+        margin: 0px;
+        width: 100%;
+        height: 100%;
+      }
 
-			.chatBox{
-				padding: 8px;
-				margin: 0px;
-				border: 2px solid #ccc;
-				border-radius: 4px;
-				box-sizing: border-box;
-				background-color: rgba(255, 255, 255, 0.2);
-				width: 400px;
-				height: 120px;
-				font-size: 12px;
-				font-family: 'Courier New', Courier, monospace;
-				overflow-wrap: break-word;
-				overflow:hidden;
-				overflow-y:auto;
-				position: absolute;
-				bottom: 40px;
-			}	
+      .gameScreenContainer {
+        background-image: url('/client/img/dust.png');
+        background: #000000;
+        border-radius: 20px;
+        border: 3px solid #6797ff;
+        width: 1000px;
+        height: 600px;
+        margin-top: 30px;
+        overflow: hidden;
+        position: relative;
+      }
 
-			.chatBox:hover{
-				background-color: rgba(255, 255, 255, 0.7);
-			}
-		</style>
-		
-				
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-		<script>var exports = {};</script>
-	</head>
-	<body align="center">	
-		<div id="gameplay" name="gameplay" align="center">
-			<div class="gameScreenContainer" align="left">
-				<div class="chatArea" align="left">
-					<div class="chatBox" id="chatBox" align="left"></div>
-					<input class="chatInput" type="text" id="chatMsg" placeholder="Chat" name="chatMsg" autocomplete="off">
-				</div>
-				<canvas id="gameScreen" class="gameScreen" style="width:100%; height:100%" tabindex="1"></canvas>
-			</div>
-		</div>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-		<script src="/client/scripts/game.js"></script>
-	</body>
+      .chatInput {
+        width: 400px;
+        height: 30px;
+        padding: 10px 10px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        position: absolute;
+        bottom: 0px;
+      }
+
+      .chatArea {
+        padding: 0px;
+        margin: 0px;
+        width: 400px;
+        height: 200px;
+        box-sizing: border-box;
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
+      }
+
+      .chatBox {
+        padding: 8px;
+        margin: 0px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        background-color: rgba(255, 255, 255, 0.2);
+        width: 400px;
+        height: 120px;
+        font-size: 12px;
+        font-family: 'Courier New', Courier, monospace;
+        overflow-wrap: break-word;
+        overflow: hidden;
+        overflow-y: auto;
+        position: absolute;
+        bottom: 40px;
+      }
+
+      .chatBox:hover {
+        background-color: rgba(255, 255, 255, 0.7);
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+      var exports = {};
+    </script>
+    <script src="/client/scripts/tween.umd.js"></script>
+  </head>
+  <body align="center">
+    <div id="gameplay" name="gameplay" align="center">
+      <div class="gameScreenContainer" align="left">
+        <div class="chatArea" align="left">
+          <div class="chatBox" id="chatBox" align="left"></div>
+          <input class="chatInput" type="text" id="chatMsg" placeholder="Chat" name="chatMsg" autocomplete="off" />
+        </div>
+        <canvas id="gameScreen" class="gameScreen" style="width: 100%; height: 100%" tabindex="1"></canvas>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="/client/scripts/game.js"></script>
+  </body>
 </html>
