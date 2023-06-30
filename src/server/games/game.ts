@@ -261,6 +261,7 @@ class GameRoom {
             if (player.attackStage === 0) {
               player.onAttack = false;
               player.attackCount = 0;
+              player.knock = [];
             }
           }
         } catch (err) {
