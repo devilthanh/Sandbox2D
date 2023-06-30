@@ -66,6 +66,10 @@ class GameClient {
     return this._clientRotate;
   }
 
+  private sendMessage = (gameMessage: GameMessage) => {
+    this._wsClient?.send(JSON.stringify(gameMessage));
+  };
+
   private initNetworking = () => {
     if (this._roomId) {
       this._pingSent = false;
@@ -84,6 +88,18 @@ class GameClient {
         }
       }, 1000);
 
+      setInterval(() => {
+        if (this._roomId != null) {
+          this.sendMessage({
+            roomId: this._roomId,
+            event: 'ROTATE',
+            data: {
+              rotate: this._clientRotate,
+            },
+          });
+        }
+      }, 50);
+
       if (window.location.protocol.startsWith('https')) {
         this._wsClient = new WebSocket(`wss://${window.location.host}`);
       } else {
@@ -91,11 +107,12 @@ class GameClient {
       }
 
       this._wsClient.onopen = () => {
+        const playerName = new URL(window.document.location.href).searchParams.get('name') || 'Player';
         this.sendMessage({
           roomId: this._roomId,
           event: 'JOIN',
           data: {
-            playerName: 'Player',
+            playerName,
           },
         } as GameMessage);
       };
@@ -137,11 +154,16 @@ class GameClient {
             const players: ClientPlayer[] = gameMessage.data as ClientPlayer[];
             players.forEach(player => {
               player.networkPosition = player.position;
+              player.networkRotate = player.rotate;
               const old = this._players.find(oldPlayer => oldPlayer.id === player.id);
-              if (old != null && player.position != null) {
+              if (old != null) {
                 player.position = old.position;
+                player.rotate = old.rotate;
               }
+
               if (player.positionTween != null) player.positionTween.stop();
+              if (player.rotateTween != null) player.rotateTween.stop();
+
               player.positionTween = new TWEEN.Tween(player.position)
                 .to(
                   {
@@ -151,6 +173,8 @@ class GameClient {
                   100
                 )
                 .start();
+
+              player.positionTween = new TWEEN.Tween(player).to({ rotate: player.networkRotate }, 50).start();
             });
             this._players.splice(0, this._players.length);
             for (const player of players) {
@@ -273,10 +297,6 @@ class GameClient {
         this._gameScreen.focus();
       }
     };
-  };
-
-  private sendMessage = (gameMessage: GameMessage) => {
-    this._wsClient?.send(JSON.stringify(gameMessage));
   };
 }
 
@@ -795,4 +815,5 @@ class MapRenderer {
 }
 
 new GameClient();
+
 export {};

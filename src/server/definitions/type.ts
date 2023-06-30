@@ -68,6 +68,8 @@ export type PlayerUpdate = {
 export type ClientPlayer = PlayerUpdate & {
   networkPosition: Vector2;
   positionTween: any;
+  networkRotate: number;
+  rotateTween: any;
 };
 
 // Physics
@@ -109,6 +111,10 @@ export type AttackMessage = {
   rotate: number;
 };
 
+export type RotateMessage = {
+  rotate: number;
+};
+
 export enum GameMessageType {
   PING,
   JOIN,
@@ -117,11 +123,20 @@ export enum GameMessageType {
   PLAYER_UPDATE,
   ATTACK,
   INPUT,
+  ROTATE,
 }
 
 export type GameMessage = {
   roomId: string;
   event: keyof typeof GameMessageType;
   playerId?: string;
-  data?: PlayerUpdate[] | ChatMessage | GameMap | JoinMessage | PingMessage | AttackMessage | InputController;
+  data?:
+    | PlayerUpdate[]
+    | ChatMessage
+    | GameMap
+    | JoinMessage
+    | PingMessage
+    | AttackMessage
+    | InputController
+    | RotateMessage;
 };

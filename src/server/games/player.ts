@@ -10,6 +10,7 @@ import {
 } from '../definitions/type';
 import GameRoom from './game';
 import { randomInt, getCurrentTickInNanos, NS_PER_SEC, walkable } from './gameUtils';
+import { RotateMessage } from '../definitions/type';
 
 const botUpdateSeconds = 3;
 
@@ -120,6 +121,9 @@ class Player {
         }
         case 'INPUT':
           this._inputController = message.data as InputController;
+          break;
+        case 'ROTATE':
+          this.rotate = (message.data as RotateMessage).rotate;
           break;
         case 'ATTACK': {
           const attackMessage: AttackMessage = message.data as AttackMessage;
