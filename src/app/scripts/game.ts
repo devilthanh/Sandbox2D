@@ -141,6 +141,16 @@ class GameClient {
               if (old != null && player.position != null) {
                 player.position = old.position;
               }
+              const predictionVector = this.latency / 30;
+              const tween = new TWEEN.Tween(player.position)
+                .to(
+                  {
+                    x: player.networkPosition.x + player.velocity.x * predictionVector,
+                    y: player.networkPosition.y + player.velocity.y * predictionVector,
+                  },
+                  this.latency > 30 ? this.latency : 30
+                )
+                .start();
             });
             this._players.splice(0, this._players.length);
             for (const player of players) {
@@ -323,25 +333,25 @@ class MapRenderer {
     this._images.tiles = [];
     this._images.shadows = [];
     this._images.tileset = new Image();
-    this._images.tileset.src = '/client/img/default_dust.png';
+    this._images.tileset.src = '/imgs/default_dust.png';
     this._images.tileShadow = new Image();
-    this._images.tileShadow.src = '/client/img/tileshadow.png';
+    this._images.tileShadow.src = '/imgs/tileshadow.png';
     this._images.cloud = new Image();
-    this._images.cloud.src = '/client/img/cloud.png';
+    this._images.cloud.src = '/imgs/cloud.png';
     this._images.player = new Image();
-    this._images.player.src = '/client/img/player.png';
+    this._images.player.src = '/imgs/player.png';
     this._images.playerShadow = new Image();
-    this._images.playerShadow.src = '/client/img/playershadow.png';
+    this._images.playerShadow.src = '/imgs/playershadow.png';
     this._images.monster = new Image();
-    this._images.monster.src = '/client/img/monster.png';
+    this._images.monster.src = '/imgs/monster.png';
     this._images.mapShadow = new Image();
-    this._images.mapShadow.src = '/client/img/shadowmap.png';
+    this._images.mapShadow.src = '/imgs/shadowmap.png';
 
     this._images.effect = {};
     this._images.effect.blood = new Image();
-    this._images.effect.blood.src = '/client/img/blood.png';
+    this._images.effect.blood.src = '/imgs/blood.png';
     this._images.effect.explosion = new Image();
-    this._images.effect.explosion.src = '/client/img/explosion.png';
+    this._images.effect.explosion.src = '/imgs/explosion.png';
 
     this._images.tileset.onload = () => {
       this.loadTiles();
@@ -658,16 +668,6 @@ class MapRenderer {
     const clientPlayer = this._gameClient.clientPlayer;
     if (clientPlayer != undefined && this._context2D && this._canvas) {
       for (const player of this._gameClient.players) {
-        const predictionVector = this._gameClient.latency / 50;
-        const tween = new TWEEN.Tween(player.position)
-          .to(
-            {
-              x: player.networkPosition.x + player.velocity.x * predictionVector,
-              y: player.networkPosition.y + player.velocity.y * predictionVector,
-            },
-            this._gameClient.latency > 30 ? this._gameClient.latency : 30
-          )
-          .start();
         let rot: number;
         if (!player.onAttack) {
           rot = player.id === clientPlayer.id ? this._gameClient.clientRotate : player.rotate;

@@ -29,7 +29,7 @@ const createServer = (): express.Application => {
     }
   });
 
-  app.use('/client', express.static(path.join(__dirname, '..', 'app')));
+  app.use(express.static(path.join(__dirname, '..', 'app')));
 
   app.get('*', (_req, res) => {
     res.status(404).sendFile(path.join(__dirname, '..', 'app', '404.html'));
