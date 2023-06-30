@@ -1,13 +1,6 @@
-import {
-  ChatMessage,
-  GameInfo,
-  GameMap,
-  GameMessage,
-  GameOptions,
-  PlayerOptions,
-  PlayerUpdate,
-} from '../definitions/type';
+import { ChatMessage, GameInfo, GameMap, GameMessage, GameOptions, PlayerOptions } from '../definitions/type';
 import Player from './player';
+import async from 'async';
 import { getCurrentTickInNanos, NS_PER_SEC, toTile, walkable, normalizeVector2 } from './gameUtils';
 
 const serverTick = 30;
@@ -68,11 +61,12 @@ class GameRoom {
   };
 
   public broadcast = (gameMessage: GameMessage) => {
-    for (const player of this._players) {
+    async.each(this._players, (player, callback) => {
       if (!gameMessage.playerId || gameMessage.playerId === player.id) {
         player.sendMessage(gameMessage);
       }
-    }
+      callback();
+    });
   };
 
   public addPlayer = (playerOptions: PlayerOptions): Player => {
@@ -138,154 +132,162 @@ class GameRoom {
   };
 
   private gameUpdate = () => {
-    for (const player of this._players) {
-      player.velocity = { x: 0, y: 0 };
+    async
+      .each(this._players, (player, callback) => {
+        try {
+          player.velocity = { x: 0, y: 0 };
 
-      if (player.knockTime > 0) player.knockTime -= 1;
+          if (player.knockTime > 0) player.knockTime -= 1;
 
-      if (player.knockTime === 0) {
-        if (player.inputController.moveLeft) {
-          player.velocity.x -= 1;
-        }
-        if (player.inputController.moveRight) {
-          player.velocity.x += 1;
-        }
-        if (player.inputController.moveUp) {
-          player.velocity.y -= 1;
-        }
-        if (player.inputController.moveDown) {
-          player.velocity.y += 1;
-        }
+          if (player.knockTime === 0) {
+            if (player.inputController.moveLeft) {
+              player.velocity.x -= 1;
+            }
+            if (player.inputController.moveRight) {
+              player.velocity.x += 1;
+            }
+            if (player.inputController.moveUp) {
+              player.velocity.y -= 1;
+            }
+            if (player.inputController.moveDown) {
+              player.velocity.y += 1;
+            }
 
-        player.velocity = normalizeVector2(player.velocity);
-      } else {
-        player.velocity = normalizeVector2({ x: Math.sin(player.knockDir) * 7, y: -Math.cos(player.knockDir) * 7 });
-      }
+            player.velocity = normalizeVector2(player.velocity);
+          } else {
+            player.velocity = normalizeVector2({ x: Math.sin(player.knockDir) * 7, y: -Math.cos(player.knockDir) * 7 });
+          }
 
-      player.velocity.x *= 6 + (player.inputController.running ? 4 : 0);
-      player.velocity.y *= 6 + (player.inputController.running ? 4 : 0);
+          player.velocity.x *= 6 + (player.inputController.running ? 4 : 0);
+          player.velocity.y *= 6 + (player.inputController.running ? 4 : 0);
 
-      const ox = player.velocity.x === 0 ? 0 : player.velocity.x < 0 ? -12 : 12;
-      const oy = player.velocity.y === 0 ? 0 : player.velocity.y < 0 ? -12 : 12;
-      const x = toTile(player.position.x, this._map);
-      const x1 = toTile(player.position.x - 12, this._map);
-      const x2 = toTile(player.position.x + 12, this._map);
-      const xh = toTile(player.position.x + player.velocity.x + ox, this._map);
-      const y = toTile(player.position.y, this._map);
-      const y1 = toTile(player.position.y - 12, this._map);
-      const y2 = toTile(player.position.y + 12, this._map);
-      const yv = toTile(player.position.y + player.velocity.y + oy, this._map);
+          const ox = player.velocity.x === 0 ? 0 : player.velocity.x < 0 ? -12 : 12;
+          const oy = player.velocity.y === 0 ? 0 : player.velocity.y < 0 ? -12 : 12;
+          const x = toTile(player.position.x, this._map);
+          const x1 = toTile(player.position.x - 12, this._map);
+          const x2 = toTile(player.position.x + 12, this._map);
+          const xh = toTile(player.position.x + player.velocity.x + ox, this._map);
+          const y = toTile(player.position.y, this._map);
+          const y1 = toTile(player.position.y - 12, this._map);
+          const y2 = toTile(player.position.y + 12, this._map);
+          const yv = toTile(player.position.y + player.velocity.y + oy, this._map);
 
-      if (player.position.x + player.velocity.x - 32 < 0 || player.position.x + player.velocity.x + 32 >= this._mapW) {
-        player.velocity.x = 0;
-      }
-      if (player.position.y + player.velocity.y - 32 < 0 || player.position.y + player.velocity.y + 32 >= this._mapH) {
-        player.velocity.y = 0;
-      }
+          if (
+            player.position.x + player.velocity.x - 32 < 0 ||
+            player.position.x + player.velocity.x + 32 >= this._mapW
+          ) {
+            player.velocity.x = 0;
+          }
+          if (
+            player.position.y + player.velocity.y - 32 < 0 ||
+            player.position.y + player.velocity.y + 32 >= this._mapH
+          ) {
+            player.velocity.y = 0;
+          }
 
-      if (player.velocity.x != 0 || player.velocity.y != 0) {
-        if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
-          player.velocity.x = 0;
-        }
-        if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
-          player.velocity.y = 0;
-        }
-      }
+          if (player.velocity.x != 0 || player.velocity.y != 0) {
+            if (!walkable(this._map.data[y1][xh].type) || !walkable(this._map.data[y2][xh].type)) {
+              player.velocity.x = 0;
+            }
+            if (!walkable(this._map.data[yv][x1].type) || !walkable(this._map.data[yv][x2].type)) {
+              player.velocity.y = 0;
+            }
+          }
 
-      player.position.x += player.velocity.x;
-      player.position.y += player.velocity.y;
-      player.fakeRotate = player.rotate;
+          player.position.x += player.velocity.x;
+          player.position.y += player.velocity.y;
+          player.fakeRotate = player.rotate;
 
-      if (player.onAttack) {
-        if (player.attackStage === 3) {
-          player.fakeRotate += 0.2 * (5 - player.attackCount);
-        } else if (player.attackStage === 2) {
-          player.fakeRotate -= 0.4 * (5 - player.attackCount) - 0.2 * 5;
-          for (const otherPlayer of this._players) {
-            if (player.id != otherPlayer.id) {
-              const dt =
-                (player.position.x - otherPlayer.position.x) * (player.position.x - otherPlayer.position.x) +
-                (player.position.y - otherPlayer.position.y) * (player.position.y - otherPlayer.position.y);
-              const dir = -Math.atan2(
-                player.position.x - otherPlayer.position.x,
-                player.position.y - otherPlayer.position.y
-              );
+          if (player.onAttack) {
+            if (player.attackStage === 3) {
+              player.fakeRotate += 0.2 * (5 - player.attackCount);
+            } else if (player.attackStage === 2) {
+              player.fakeRotate -= 0.4 * (5 - player.attackCount) - 0.2 * 5;
+              for (const otherPlayer of this._players) {
+                if (player.id != otherPlayer.id) {
+                  const dt =
+                    (player.position.x - otherPlayer.position.x) * (player.position.x - otherPlayer.position.x) +
+                    (player.position.y - otherPlayer.position.y) * (player.position.y - otherPlayer.position.y);
+                  const dir = -Math.atan2(
+                    player.position.x - otherPlayer.position.x,
+                    player.position.y - otherPlayer.position.y
+                  );
 
-              if (dt <= 35 * 35 && !player.knock[otherPlayer.id]) {
-                if (
-                  Math.abs(player.rotate - dir) <= 0.8 ||
-                  Math.abs(player.rotate + 2 * Math.PI - dir) <= 0.8 ||
-                  Math.abs(player.rotate - 2 * Math.PI - dir) <= 0.8
-                ) {
-                  const killed = otherPlayer.hit(player, dir);
-                  if (killed) {
-                    this.broadcast({
-                      roomId: this._id,
-                      event: 'CHAT',
-                      data: {
-                        channel: 'GAME_ROOM',
-                        message:
-                          '<span style="color:blue">' +
-                          player.name +
-                          ' </span>' +
-                          '<span style="color:#dd0000"> killed </span>' +
-                          '<span style="color:blue">' +
-                          otherPlayer.name +
-                          ' </span>',
-                      } as ChatMessage,
-                    });
-                  } else {
-                    player.knock[otherPlayer.id] = true;
+                  if (dt <= 35 * 35 && !player.knock[otherPlayer.id]) {
+                    if (
+                      Math.abs(player.rotate - dir) <= 0.8 ||
+                      Math.abs(player.rotate + 2 * Math.PI - dir) <= 0.8 ||
+                      Math.abs(player.rotate - 2 * Math.PI - dir) <= 0.8
+                    ) {
+                      const killed = otherPlayer.hit(player, dir);
+                      if (killed) {
+                        this.broadcast({
+                          roomId: this._id,
+                          event: 'CHAT',
+                          data: {
+                            channel: 'GAME_ROOM',
+                            message:
+                              '<span style="color:blue">' +
+                              player.name +
+                              ' </span>' +
+                              '<span style="color:#dd0000"> killed </span>' +
+                              '<span style="color:blue">' +
+                              otherPlayer.name +
+                              ' </span>',
+                          } as ChatMessage,
+                        });
+                      } else {
+                        player.knock[otherPlayer.id] = true;
+                      }
+                    }
                   }
                 }
               }
+            } else if (player.attackStage === 1) {
+              player.fakeRotate += 0.1 * (10 - player.attackCount) - 0.1 * 10;
+            }
+
+            if (player.fakeRotate > Math.PI) player.fakeRotate = player.fakeRotate - 2 * Math.PI;
+
+            if (player.fakeRotate < -Math.PI) player.fakeRotate = 2 * Math.PI + player.fakeRotate;
+
+            player.attackCount -= 1;
+            if (player.attackCount < 0) {
+              player.attackStage -= 1;
+              if (player.attackStage === 2) player.attackCount = 2;
+              else if (player.attackStage === 1) player.attackCount = 5;
+            }
+
+            if (player.attackStage === 0) {
+              player.onAttack = false;
+              player.attackCount = 0;
             }
           }
-        } else if (player.attackStage === 1) {
-          player.fakeRotate += 0.1 * (10 - player.attackCount) - 0.1 * 10;
+        } catch (err) {
+          console.log(err);
         }
-
-        if (player.fakeRotate > Math.PI) player.fakeRotate = player.fakeRotate - 2 * Math.PI;
-
-        if (player.fakeRotate < -Math.PI) player.fakeRotate = 2 * Math.PI + player.fakeRotate;
-
-        player.attackCount -= 1;
-        if (player.attackCount < 0) {
-          player.attackStage -= 1;
-          if (player.attackStage === 2) player.attackCount = 2;
-          else if (player.attackStage === 1) player.attackCount = 5;
-        }
-
-        if (player.attackStage === 0) {
-          player.onAttack = false;
-          player.attackCount = 0;
-        }
-      }
-    }
-
-    const sendData: PlayerUpdate[] = [];
-    for (const player of this._players) {
-      sendData.push({
-        id: player.id,
-        name: player.name,
-        health: player.health,
-        maxHealth: player.maxHealth,
-        sheild: player.sheild,
-        maxSheild: player.maxSheild,
-        rotate: player.rotate,
-        fakeRotate: player.fakeRotate,
-        onAttack: player.onAttack,
-        position: player.position,
-        velocity: player.velocity,
-        inputController: player.inputController,
+        callback();
+      })
+      .then(() => {
+        this.broadcast({
+          roomId: this._id,
+          event: 'PLAYER_UPDATE',
+          data: this._players.map(player => ({
+            id: player.id,
+            name: player.name,
+            health: player.health,
+            maxHealth: player.maxHealth,
+            sheild: player.sheild,
+            maxSheild: player.maxSheild,
+            rotate: player.rotate,
+            fakeRotate: player.fakeRotate,
+            onAttack: player.onAttack,
+            position: player.position,
+            velocity: player.velocity,
+            inputController: player.inputController,
+          })),
+        });
       });
-    }
-
-    this.broadcast({
-      roomId: this._id,
-      event: 'PLAYER_UPDATE',
-      data: sendData,
-    });
   };
 
   private loop = () => {
