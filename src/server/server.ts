@@ -5,6 +5,8 @@ import { GameMessage, GameOptions, JoinMessage } from './definitions/type';
 import GameRoom from './games/game';
 import { dust2 } from './maps/dust2';
 
+const PORT = process.env.PORT || 8080;
+
 const createServer = (): express.Application => {
   const app = express();
   const gameRooms: Array<GameRoom> = [];
@@ -33,8 +35,8 @@ const createServer = (): express.Application => {
     res.status(404).sendFile(path.join(__dirname, '..', 'app', '404.html'));
   });
 
-  const server = app.listen(8080, () => {
-    console.log(`GameServer running on port ${8080}`);
+  const server = app.listen(PORT, () => {
+    console.log(`GameServer running on port ${PORT}`);
   });
 
   const wsServer = new WebSocketServer({ httpServer: server });
