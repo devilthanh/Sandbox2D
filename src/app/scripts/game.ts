@@ -82,7 +82,7 @@ class GameClient {
             },
           });
         }
-      }, 3000);
+      }, 1000);
 
       if (window.location.protocol.startsWith('https')) {
         this._wsClient = new WebSocket(`wss://${window.location.host}`);
@@ -658,7 +658,16 @@ class MapRenderer {
     const clientPlayer = this._gameClient.clientPlayer;
     if (clientPlayer != undefined && this._context2D && this._canvas) {
       for (const player of this._gameClient.players) {
-        const tween = new TWEEN.Tween(player.position).to(player.networkPosition, 2000 / this._currentFps).start();
+        const predictionVector = this._gameClient.latency / 50;
+        const tween = new TWEEN.Tween(player.position)
+          .to(
+            {
+              x: player.networkPosition.x + player.velocity.x * predictionVector,
+              y: player.networkPosition.y + player.velocity.y * predictionVector,
+            },
+            this._gameClient.latency > 30 ? this._gameClient.latency : 30
+          )
+          .start();
         let rot: number;
         if (!player.onAttack) {
           rot = player.id === clientPlayer.id ? this._gameClient.clientRotate : player.rotate;
