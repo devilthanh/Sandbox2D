@@ -194,6 +194,25 @@ class GameRoom {
             }
           }
 
+          for (const otherPlayer of this._players) {
+            if (player.id === otherPlayer.id) continue;
+            const dtx =
+              (player.position.x + player.velocity.x - otherPlayer.position.x) *
+                (player.position.x + player.velocity.x - otherPlayer.position.x) +
+              (player.position.y - otherPlayer.position.y) * (player.position.y - otherPlayer.position.y);
+            const dty =
+              (player.position.x - otherPlayer.position.x) * (player.position.x - otherPlayer.position.x) +
+              (player.position.y + player.velocity.y - otherPlayer.position.y) *
+                (player.position.y + player.velocity.y - otherPlayer.position.y);
+
+            if (dtx < 400) {
+              player.velocity.x = 0;
+            }
+            if (dty < 400) {
+              player.velocity.y = 0;
+            }
+          }
+
           player.position.x += player.velocity.x;
           player.position.y += player.velocity.y;
           player.fakeRotate = player.rotate;
